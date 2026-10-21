@@ -1,0 +1,104 @@
+/* MPXAir theme on top of libadwaita */
+
+.numeric, .stat-value, .mono {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-tile {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background-color: alpha(currentColor, 0.05);
+}
+.stat-tile:hover { background-color: alpha(currentColor, 0.08); }
+.stat-title {
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+}
+.stat-value {
+  font-size: 1.85em;
+  font-weight: 700;
+}
+.stat-unit { font-size: 0.85em; opacity: 0.6; }
+
+.chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85em;
+  background-color: alpha(currentColor, 0.08);
+}
+.chip.ok    { background-color: alpha(@success_color, 0.18); color: @success_color; }
+.chip.warn  { background-color: alpha(@warning_color, 0.20); color: @warning_color; }
+.chip.bad   { background-color: alpha(@error_color, 0.20);   color: @error_color; }
+.chip.info  { background-color: alpha(@accent_color, 0.18);  color: @accent_color; }
+
+.armed-chip {
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.armed-chip.armed    { background-color: @error_bg_color; color: @error_fg_color; }
+.armed-chip.disarmed { background-color: alpha(currentColor, 0.10); }
+
+.map-card {
+  background-color: alpha(@window_bg_color, 0.88);
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 4px alpha(black, 0.25);
+}
+.map-attrib {
+  font-size: 0.7em;
+  background-color: alpha(@window_bg_color, 0.7);
+  padding: 1px 6px;
+  border-radius: 6px 0 0 0;
+}
+
+.side-panel { background-color: @sidebar_bg_color; }
+.panel-header {
+  font-weight: 700;
+  font-size: 0.8em;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.messages-view text { background: transparent; }
+.msg-critical { color: @error_color; }
+.msg-warning  { color: @warning_color; }
+
+.big-action {
+  min-height: 42px;
+  font-weight: 700;
+}
+
+.status-row {
+  padding: 4px 6px;
+  border-bottom: 1px solid alpha(currentColor, 0.06);
+}
+
+.connect-bar entry, .connect-bar dropdown, .connect-bar spinbutton { min-height: 30px; }
+
+.bar-track {
+  background-color: alpha(currentColor, 0.10);
+  border-radius: 4px;
+  min-height: 10px;
+}
+
+.calib-step {
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+.planner-table row { min-height: 34px; }
+.wp-badge {
+  border-radius: 999px;
+  min-width: 26px;
+  padding: 2px 6px;
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  font-weight: 700;
+}
