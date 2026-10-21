@@ -88,7 +88,10 @@ The installer:
 
 ## Connecting
 
-Pick a connection at the top right, then press **Connect**.
+Pick a connection at the top right, then press **Connect**. A progress window shows each step, as in
+Mission Planner: link opened, heartbeat received from the aircraft, parameters counting up (for example
+*Parameters 812 / 1431*), then the mission, geofence and rally points. It closes on its own once
+everything is loaded, so you know the air unit is really talking to you.
 
 | Connection | Use it for |
 |---|---|
@@ -117,8 +120,14 @@ New USB devices are noticed as soon as they're plugged in. Every session is reco
   - arm and disarm (with force when needed), takeoff, mode buttons, any flight mode;
   - set the current waypoint, start or restart the mission, change speed and altitude;
   - calibrate the gyro or barometer, reboot, trigger the camera.
-- **Quick view**: eight tiles. Click any tile to choose what it shows, for example altitude, speeds,
-  battery, distance from the ground station, or ground GPS satellites.
+- **Quick view**: 2 to 16 tiles. Add a tile with **Add a tile**. Click a tile to choose from more than 45
+  values in sections (height, speed and attitude, navigation, battery, GPS and health, telemetry link,
+  ground station), or to remove it.
+- **GPS status at the bottom-left of the map**, like Mission Planner: fix type, satellites and HDOP,
+  coloured by quality.
+- **Flight trail** that keeps only the last 10 s, 20 s (default), 30 s, 1, 2 or 5 minutes, or the whole
+  flight. Older track fades and is cleared automatically. Set it on the Actions tab or in Preferences.
+  **Clear Track** still clears it at once.
 - **Status, Air and Ground**:
   - **Air**: battery, GPS, EKF, vibration, link and radio quality, home, flight time, wind and firmware.
   - **Ground**: your position, the aircraft's distance, bearing and elevation from you, laptop battery,
@@ -140,7 +149,8 @@ New USB devices are noticed as soon as they're plugged in. Every session is reco
 - **Clear**: the mission, geofence, rally points, survey area, or everything. You choose whether to
   clear only the plan or the vehicle's copy too.
 - Leg distances, total distance and estimated flight time.
-- Read from and write to the vehicle.
+- Read from and write to the vehicle. A progress window shows each part (mission, geofence, rally
+  points) item by item, and confirms what the aircraft accepted.
 - Load and save `.waypoints` files (Mission Planner / QGC WPL 110).
 
 ### Setup
@@ -158,6 +168,9 @@ New USB devices are noticed as soon as they're plugged in. Every session is reco
 
 ### Parameters
 - Every parameter, with fast search, filters and full descriptions.
+- **Groups sidebar** with friendly names, such as *Battery (BATT)*, *Failsafes (FS)*, *Servo / motor
+  outputs (SERVO)* and *EKF3 (EK3)*, so you can browse without knowing the exact name.
+- Hover over any parameter, anywhere in MPXAir, to see a short description of what it does.
 - Dropdowns for named values, switches for bitmasks, and range-checked numbers.
 - Changes are reviewed, then written together. MPXAir offers a reboot when needed.
 - Save and load `.param` files (Mission Planner, MAVProxy and QGC formats). Loading compares the file

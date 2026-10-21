@@ -6,7 +6,19 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk  # noqa: E402
 
 from ..core.params import ParamDocs, format_value  # noqa: E402
-from .util import background, button, label, toast  # noqa: E402
+from .util import background, button, combo_row, label, short_description, toast  # noqa: E402
+
+
+def param_tooltip(name, d):
+    """Hover text for a parameter: what it does, in a sentence or two, plus its name and units."""
+    parts = []
+    if d.get("Description"):
+        parts.append(short_description(d["Description"]))
+    meta = name + (f" · units: {d['Units']}" if d.get("Units") else "")
+    if d.get("RebootRequired", "").lower() == "true":
+        meta += " · needs a reboot"
+    parts.append(meta)
+    return "\n".join(parts)
 
 
 class ParamForm(Gtk.Box):
@@ -67,14 +79,13 @@ class ParamForm(Gtk.Box):
         cur = self.v.params.get(name)
         self.originals[name] = cur
         title = d.get("DisplayName") or name
-        subtitle = name + (f" · {d['Units']}" if d.get("Units") else "")
+        tip = param_tooltip(name, d)
         if d.get("values"):
             vals = list(d["values"])
             if not any(abs(k - float(cur)) < 1e-6 for k, _l in vals):
                 vals.append((float(cur), f"{format_value(cur)} (custom)"))
-            row = Adw.ComboRow(title=title, subtitle=subtitle,
-                               model=Gtk.StringList.new([l for _k, l in vals]))
-            row.set_selected(next(i for i, (k, _l) in enumerate(vals) if abs(k - float(cur)) < 1e-6))
+            sel = next(i for i, (k, _l) in enumerate(vals) if abs(k - float(cur)) < 1e-6)
+            row = combo_row(title, [l for _k, l in vals], sel, tooltip=tip, tag=name)
             self.getters[name] = lambda: vals[row.get_selected()][0]
         else:
             lo, hi = d.get("range", (-1e7, 1e7))
@@ -86,12 +97,12 @@ class ParamForm(Gtk.Box):
                 step = 1
             row = Adw.SpinRow.new_with_range(lo, hi, step)
             row.set_title(title)
-            row.set_subtitle(subtitle)
+            row.set_subtitle(name + (f" · {d['Units']}" if d.get("Units") else "")
+                             + (f" · {d['range'][0]:g} to {d['range'][1]:g}" if d.get("range") else ""))
             row.set_digits(0 if is_int else 2)
             row.set_value(float(cur))
+            row.set_tooltip_text(tip)
             self.getters[name] = lambda: row.get_value()
-        if d.get("Description"):
-            row.set_tooltip_text(d["Description"])
         return row
 
     def changes(self):

@@ -13,55 +13,86 @@ from ..core import modes  # noqa: E402
 from ..core.ground import laptop_power, tracker_angles  # noqa: E402
 from ..maps import tiles  # noqa: E402
 from .hud import Hud  # noqa: E402
-from .layers import (FenceLayer, GroundLayer, HomeLayer, MeasureLayer, MissionLayer,  # noqa: E402
-                     RallyLayer, TargetLayer, TrailLayer, VehicleLayer)
+from .layers import (TRAIL_CHOICES, FenceLayer, GroundLayer, HomeLayer, MeasureLayer,  # noqa: E402
+                     MissionLayer, RallyLayer, TargetLayer, TrailLayer, VehicleLayer)
 from .mapview import MapView  # noqa: E402
 from ..core.vehicle import haversine  # noqa: E402
 from .util import (GPS_FIX, ask_number, background, button, confirm, fmt_dist, fmt_time,  # noqa: E402
                    label, toast)
 
 # name: (title, unit, getter)
+def _g(name, default=0.0):
+    return lambda s: getattr(s, name, default) or 0.0
+
+
+# name: (title, unit, getter, section, decimals)
 QUICK_FIELDS = {
-    "alt": ("Altitude", "m", lambda s: s.alt),
-    "alt_msl": ("Altitude (MSL)", "m", lambda s: s.alt_msl),
-    "groundspeed": ("Ground speed", "m/s", lambda s: s.groundspeed),
-    "airspeed": ("Air speed", "m/s", lambda s: s.airspeed),
-    "climb": ("Vertical speed", "m/s", lambda s: s.climb),
-    "yaw": ("Heading", "°", lambda s: s.yaw),
-    "dist_home": ("Distance to home", "m", lambda s: s.dist_home),
-    "wp_dist": ("Distance to WP", "m", lambda s: s.wp_dist),
-    "current_wp": ("Current WP", "", lambda s: s.current_wp),
-    "voltage": ("Battery voltage", "V", lambda s: s.voltage),
-    "current": ("Battery current", "A", lambda s: s.current),
-    "battery_remaining": ("Battery left", "%", lambda s: s.battery_remaining),
-    "battery_used_mah": ("Battery used", "mAh", lambda s: s.battery_used_mah),
-    "gps_sats": ("Satellites", "", lambda s: s.gps_sats),
-    "gps_hdop": ("GPS HDOP", "", lambda s: s.gps_hdop),
-    "throttle": ("Throttle", "%", lambda s: s.throttle),
-    "roll": ("Roll", "°", lambda s: s.roll),
-    "pitch": ("Pitch", "°", lambda s: s.pitch),
-    "flight_time": ("Flight time", "", lambda s: s.flight_time),
-    "wind_speed": ("Wind speed", "m/s", lambda s: s.wind_speed),
-    "wind_dir": ("Wind direction", "°", lambda s: s.wind_dir),
-    "link_quality": ("Link quality", "%", lambda s: s.link_quality),
-    "dist_ground": ("Distance from ground", "m", lambda s: getattr(s, "dist_ground", 0.0)),
-    "ground_sats": ("Ground GPS satellites", "", lambda s: getattr(s, "ground_sats", 0)),
-    "rssi": ("Radio RSSI", "", lambda s: s.rssi),
-    "xtrack_error": ("Cross-track error", "m", lambda s: s.xtrack_error),
-    "rangefinder": ("Rangefinder", "m", lambda s: s.rangefinder or 0),
-    "terrain_height": ("Terrain height", "m", lambda s: s.terrain_height or 0),
+    # position and height
+    "alt": ("Altitude", "m", lambda s: s.alt, "Height and position", 1),
+    "alt_msl": ("Altitude (sea level)", "m", lambda s: s.alt_msl, "Height and position", 1),
+    "terrain_height": ("Terrain height", "m", lambda s: s.terrain_height or 0, "Height and position", 1),
+    "rangefinder": ("Rangefinder", "m", lambda s: s.rangefinder or 0, "Height and position", 2),
+    "alt_error": ("Altitude error", "m", lambda s: s.alt_error, "Height and position", 1),
+    "lat": ("Latitude", "°", lambda s: s.lat, "Height and position", 6),
+    "lon": ("Longitude", "°", lambda s: s.lon, "Height and position", 6),
+    # speed and attitude
+    "groundspeed": ("Ground speed", "m/s", lambda s: s.groundspeed, "Speed and attitude", 1),
+    "groundspeed_kmh": ("Ground speed", "km/h", lambda s: s.groundspeed * 3.6, "Speed and attitude", 0),
+    "airspeed": ("Air speed", "m/s", lambda s: s.airspeed, "Speed and attitude", 1),
+    "climb": ("Vertical speed", "m/s", lambda s: s.climb, "Speed and attitude", 1),
+    "yaw": ("Heading", "°", lambda s: s.yaw, "Speed and attitude", 0),
+    "roll": ("Roll", "°", lambda s: s.roll, "Speed and attitude", 1),
+    "pitch": ("Pitch", "°", lambda s: s.pitch, "Speed and attitude", 1),
+    "throttle": ("Throttle", "%", lambda s: s.throttle, "Speed and attitude", 0),
+    # navigation
+    "dist_home": ("Distance to home", "m", lambda s: s.dist_home, "Navigation", 0),
+    "bearing_home": ("Bearing to home", "°", lambda s: s.bearing_home, "Navigation", 0),
+    "wp_dist": ("Distance to waypoint", "m", lambda s: s.wp_dist, "Navigation", 0),
+    "current_wp": ("Current waypoint", "", lambda s: s.current_wp, "Navigation", 0),
+    "nav_bearing": ("Target bearing", "°", lambda s: s.target_bearing, "Navigation", 0),
+    "xtrack_error": ("Cross-track error", "m", lambda s: s.xtrack_error, "Navigation", 1),
+    "dist_traveled": ("Distance flown", "m", _g("dist_traveled"), "Navigation", 0),
+    "flight_time": ("Flight time", "", lambda s: s.flight_time, "Navigation", 0),
+    # battery
+    "voltage": ("Battery voltage", "V", lambda s: s.voltage, "Battery", 2),
+    "current": ("Battery current", "A", lambda s: s.current, "Battery", 1),
+    "battery_remaining": ("Battery left", "%", lambda s: s.battery_remaining, "Battery", 0),
+    "battery_used_mah": ("Battery used", "mAh", lambda s: s.battery_used_mah, "Battery", 0),
+    "power": ("Power", "W", lambda s: s.voltage * s.current, "Battery", 0),
+    # GPS and health
+    "gps_sats": ("Satellites", "", lambda s: s.gps_sats, "GPS and health", 0),
+    "gps_hdop": ("GPS HDOP", "", lambda s: s.gps_hdop, "GPS and health", 2),
+    "vibe_max": ("Vibration (worst axis)", "m/s²", lambda s: max(s.vibe), "GPS and health", 1),
+    "ekf_worst": ("EKF variance (worst)", "", lambda s: max(s.ekf_vel_var, s.ekf_pos_h_var, s.ekf_pos_v_var,
+                                                            s.ekf_compass_var), "GPS and health", 2),
+    "cpu_load": ("Autopilot CPU load", "%", lambda s: s.load, "GPS and health", 0),
+    "wind_speed": ("Wind speed", "m/s", lambda s: s.wind_speed, "GPS and health", 1),
+    "wind_dir": ("Wind direction", "°", lambda s: s.wind_dir, "GPS and health", 0),
+    # link
+    "link_quality": ("Link quality", "%", lambda s: s.link_quality, "Telemetry link", 0),
+    "rssi": ("Radio RSSI (ground)", "", lambda s: s.rssi, "Telemetry link", 0),
+    "remrssi": ("Radio RSSI (aircraft)", "", lambda s: s.remrssi, "Telemetry link", 0),
+    "fade_margin": ("Fade margin (worst)", "", lambda s: min(s.rssi - s.noise, s.remrssi - s.remnoise),
+                    "Telemetry link", 0),
+    "rc_rssi": ("RC receiver RSSI", "", lambda s: s.rc_rssi, "Telemetry link", 0),
+    "packets_lost": ("Packets lost", "", lambda s: s.packets_lost, "Telemetry link", 0),
+    # ground station
+    "dist_ground": ("Distance from ground", "m", _g("dist_ground"), "Ground station", 0),
+    "bearing_ground": ("Bearing from ground", "°", _g("bearing_ground"), "Ground station", 0),
+    "elev_ground": ("Elevation from ground", "°", _g("elev_ground"), "Ground station", 1),
+    "ground_sats": ("Ground GPS satellites", "", _g("ground_sats", 0), "Ground station", 0),
 }
+DEFAULT_TILES = ["alt", "groundspeed", "dist_home", "climb", "yaw", "voltage", "wp_dist", "gps_sats"]
+MIN_TILES, MAX_TILES = 2, 16
 
 
 def fmt_quick(name, val):
     if name == "flight_time":
         return fmt_time(val)
-    if name in ("current_wp", "gps_sats", "ground_sats", "throttle", "battery_remaining", "rssi", "yaw",
-                "wind_dir", "battery_used_mah"):
-        return f"{val:.0f}"
-    if name in ("dist_home", "wp_dist", "dist_ground") and abs(val) >= 1000:
+    dec = QUICK_FIELDS[name][4]
+    if name in ("dist_home", "wp_dist", "dist_ground", "dist_traveled") and abs(val) >= 1000:
         return f"{val / 1000:.2f}k"
-    return f"{val:.1f}"
+    return f"{val:.{dec}f}"
 
 
 class StatTile(Gtk.Button):
@@ -87,12 +118,12 @@ class StatTile(Gtk.Button):
 
     def set_field(self, field):
         self.field = field if field in QUICK_FIELDS else "alt"
-        t, unit, _g = QUICK_FIELDS[self.field]
+        t, unit = QUICK_FIELDS[self.field][:2]
         self.title.set_text(t.upper())
         self.unit.set_text(unit)
 
     def update(self, st):
-        _t, _u, g = QUICK_FIELDS[self.field]
+        g = QUICK_FIELDS[self.field][2]
         try:
             self.value.set_text(fmt_quick(self.field, g(st)) if st.connected else "—")
         except Exception:
@@ -100,24 +131,37 @@ class StatTile(Gtk.Button):
 
     def _choose(self, *_):
         pop = Gtk.Popover()
-        sw = Gtk.ScrolledWindow(propagate_natural_height=True, max_content_height=360,
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        sw = Gtk.ScrolledWindow(propagate_natural_height=True, max_content_height=420,
                                 hscrollbar_policy=Gtk.PolicyType.NEVER)
         lb = Gtk.ListBox(css_classes=["navigation-sidebar"])
-        for name, (t, unit, _g) in QUICK_FIELDS.items():
+        section = None
+        for name, (t, unit, _g, sec, _d) in QUICK_FIELDS.items():
+            if sec != section:
+                section = sec
+                hdr = Gtk.ListBoxRow(selectable=False, activatable=False)
+                hdr.set_child(label(sec.upper(), ["panel-header"], margin_start=6, margin_top=6))
+                lb.append(hdr)
             r = Gtk.ListBoxRow()
-            r.set_child(label(f"{t}" + (f" ({unit})" if unit else ""), margin_start=6, margin_end=6))
+            r.set_child(label(f"{t}" + (f" ({unit})" if unit else ""), margin_start=14, margin_end=6))
             r.name = name
             lb.append(r)
             if name == self.field:
                 lb.select_row(r)
 
         def picked(_lb, row):
-            self.set_field(row.name)
-            self.page.save_quick()
-            pop.popdown()
+            if getattr(row, "name", None):
+                self.set_field(row.name)
+                self.page.save_quick()
+                pop.popdown()
         lb.connect("row-activated", picked)
         sw.set_child(lb)
-        pop.set_child(sw)
+        outer.append(sw)
+        rm = Gtk.Button(label="Remove this tile", css_classes=["flat", "destructive-action"])
+        rm.set_sensitive(len(self.page.tiles) > MIN_TILES)
+        rm.connect("clicked", lambda *_: (pop.popdown(), GLib.idle_add(self.page.remove_tile, self)))
+        outer.append(rm)
+        pop.set_child(outer)
         pop.set_parent(self)
         pop.connect("closed", lambda p: GLib.idle_add(p.unparent))
         pop.popup()
@@ -158,7 +202,7 @@ class FlyPage(Gtk.Box):
 
         # ---------------------------------------------------------- map side
         self.map = MapView(shared.tex_cache, shared.settings)
-        self.trail = TrailLayer(self.v)
+        self.trail = TrailLayer(self.v, int(self.settings.get("trail_seconds", 20)))
         self.target = TargetLayer()
         self.measure_layer = MeasureLayer()
         self.map.layers = [
@@ -183,6 +227,7 @@ class FlyPage(Gtk.Box):
         overlay.add_overlay(self.attrib)
         self.coord = label("", ["map-attrib", "mono"], halign=Gtk.Align.START, valign=Gtk.Align.END)
         overlay.add_overlay(self.coord)
+        overlay.add_overlay(self._gps_card())
         overlay.add_overlay(self._replay_bar())
         self.map.on_hover = lambda la, lo: self.coord.set_text(f" {la:.6f}, {lo:.6f} ")
         paned.set_end_child(overlay)
@@ -200,20 +245,51 @@ class FlyPage(Gtk.Box):
 
     # ------------------------------------------------------------- quick tab
     def _quick_tab(self):
-        grid = Gtk.Grid(column_spacing=6, row_spacing=6, column_homogeneous=True,
-                        margin_start=8, margin_end=8, margin_top=4, margin_bottom=8)
-        fields = list(self.settings.get("quick_fields") or [])
-        while len(fields) < 8:
-            fields.append(["alt", "groundspeed", "dist_home", "climb", "yaw", "voltage",
-                           "wp_dist", "gps_sats"][len(fields)])
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_start=8, margin_end=8,
+                      margin_top=4, margin_bottom=8)
+        self.quick_grid = Gtk.Grid(column_spacing=6, row_spacing=6, column_homogeneous=True)
+        box.append(self.quick_grid)
+        self.add_tile_btn = button("Add a tile", self.add_tile, ["flat"], icon="list-add-symbolic",
+                                   tooltip="Show another value (click any tile to change what it shows)")
+        box.append(self.add_tile_btn)
+        fields = [f for f in (self.settings.get("quick_fields") or []) if f in QUICK_FIELDS]
+        if len(fields) < MIN_TILES:
+            fields = list(DEFAULT_TILES)
         self.tiles = []
-        for i, f in enumerate(fields[:8]):
+        self._build_tiles(fields[:MAX_TILES])
+        sc = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
+        sc.set_child(box)
+        return sc
+
+    def _build_tiles(self, fields):
+        child = self.quick_grid.get_first_child()
+        while child:
+            nxt = child.get_next_sibling()
+            self.quick_grid.remove(child)
+            child = nxt
+        self.tiles = []
+        for i, f in enumerate(fields):
             t = StatTile(self, i, f)
             self.tiles.append(t)
-            grid.attach(t, i % 2, i // 2, 1, 1)
-        sc = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
-        sc.set_child(grid)
-        return sc
+            self.quick_grid.attach(t, i % 2, i // 2, 1, 1)
+        self.add_tile_btn.set_sensitive(len(fields) < MAX_TILES)
+
+    def add_tile(self):
+        fields = [t.field for t in self.tiles]
+        if len(fields) >= MAX_TILES:
+            return
+        unused = [f for f in QUICK_FIELDS if f not in fields]
+        fields.append(unused[0] if unused else "alt")
+        self._build_tiles(fields)
+        self.save_quick()
+        toast("Tile added — click it to choose what it shows")
+
+    def remove_tile(self, tile):
+        fields = [t.field for t in self.tiles if t is not tile]
+        if len(fields) >= MIN_TILES:
+            self._build_tiles(fields)
+            self.save_quick()
+        return False
 
     def save_quick(self):
         self.settings.set("quick_fields", [t.field for t in self.tiles])
@@ -277,8 +353,20 @@ class FlyPage(Gtk.Box):
         box.append(arow)
         brow = Gtk.Box(spacing=6, homogeneous=True)
         brow.append(button("Set Home Here", self._set_home_current, tooltip="Make the vehicle's current position home"))
-        brow.append(button("Clear Track", lambda: (self.trail.clear(), self.map.queue_draw())))
+        brow.append(button("Clear Track", lambda: (self.trail.clear(), self.map.queue_draw()),
+                           tooltip="Erase the flight trail drawn on the map"))
         box.append(brow)
+        secs = [c[0] for c in TRAIL_CHOICES]
+        cur = int(self.settings.get("trail_seconds", 20))
+        trow = Gtk.Box(spacing=6)
+        trow.append(label("Trail on map keeps", hexpand=True))
+        self.trail_dd = Gtk.DropDown(model=Gtk.StringList.new([c[1] for c in TRAIL_CHOICES]),
+                                     tooltip_text="How much of the flight trail stays on the map. "
+                                                  "Older track is cleared automatically.")
+        self.trail_dd.set_selected(secs.index(cur) if cur in secs else 1)
+        self.trail_dd.connect("notify::selected", lambda d, *_: self.set_trail_seconds(secs[d.get_selected()]))
+        trow.append(self.trail_dd)
+        box.append(trow)
 
         sc = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, vexpand=True)
         sc.set_child(box)
@@ -547,12 +635,11 @@ class FlyPage(Gtk.Box):
                       margin_top=10, css_classes=["map-card"])
         self.chip_armed = label("DISCONNECTED", ["armed-chip", "disarmed"])
         self.chip_mode = label("—", ["chip", "info"])
-        self.chip_gps = label("GPS", ["chip"])
         self.chip_batt = label("BAT", ["chip"])
         self.chip_link = label("LINK", ["chip"])
         self.chip_gnd = label("GND", ["chip"], tooltip_text="Ground station GPS")
         self.chip_alt = label("", ["chip", "numeric"])
-        for c in (self.chip_armed, self.chip_mode, self.chip_alt, self.chip_gps, self.chip_batt, self.chip_link,
+        for c in (self.chip_armed, self.chip_mode, self.chip_alt, self.chip_batt, self.chip_link,
                   self.chip_gnd):
             box.append(c)
         return box
@@ -637,6 +724,34 @@ class FlyPage(Gtk.Box):
         self.rp_time.set_text(f"{fmt_time(t.position)} / {fmt_time(t.duration)}")
         self.rp_play.set_icon_name("media-playback-start-symbolic" if t.paused else "media-playback-pause-symbolic")
 
+    def _gps_card(self):
+        """Aircraft GPS status, bottom-left of the map (where Mission Planner shows it)."""
+        card = Gtk.Box(spacing=8, halign=Gtk.Align.START, valign=Gtk.Align.END, margin_start=10,
+                       margin_bottom=46, css_classes=["map-card"], visible=False)
+        self.gps_icon = Gtk.Image(icon_name="find-location-symbolic", pixel_size=18)
+        card.append(self.gps_icon)
+        col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.gps_fix_lbl = label("GPS", ["heading"])
+        self.gps_detail_lbl = label("", ["caption", "numeric"])
+        col.append(self.gps_fix_lbl)
+        col.append(self.gps_detail_lbl)
+        card.append(col)
+        card.set_tooltip_text("The aircraft's GPS. 3D Fix or better is needed for position modes and missions; "
+                              "HDOP under 1.5 is good.")
+        self.gps_card = card
+        return card
+
+    def _update_gps_card(self, st):
+        self.gps_card.set_visible(True)
+        lvl = "success" if st.gps_fix >= 3 and st.gps_hdop < 2 else ("warning" if st.gps_fix >= 2 else "error")
+        self.gps_fix_lbl.set_text(f"GPS: {GPS_FIX.get(st.gps_fix, 'Unknown')}")
+        self.gps_fix_lbl.set_css_classes(["heading", lvl])
+        self.gps_icon.set_css_classes([lvl])
+        detail = f"{st.gps_sats} satellites · HDOP {st.gps_hdop:.1f}"
+        if st.gps2_fix is not None:
+            detail += f" · GPS2 {GPS_FIX.get(st.gps2_fix, '?')}"
+        self.gps_detail_lbl.set_text(detail)
+
     def _update_attrib(self):
         p = self.map.provider
         a = p.attribution
@@ -650,6 +765,16 @@ class FlyPage(Gtk.Box):
         if pts:
             self.follow_btn.set_active(False)
             self.map.fit(pts)
+
+    def set_trail_seconds(self, seconds):
+        self.trail.seconds = seconds
+        self.settings.set("trail_seconds", seconds)
+        self.trail.sample()
+        self.map.queue_draw()
+        if getattr(self, "trail_dd", None):
+            secs = [c[0] for c in TRAIL_CHOICES]
+            if seconds in secs and self.trail_dd.get_selected() != secs.index(seconds):
+                self.trail_dd.set_selected(secs.index(seconds))
 
     def _toggle_follow(self, b):
         self.follow_vehicle = b.get_active()
@@ -694,6 +819,10 @@ class FlyPage(Gtk.Box):
     def _update_ground_chip(self):
         g = self.shared.ground
         st = self.v.state
+        st.ground_sats = g.sats
+        if g.valid() and st.has_position:
+            az, el, d = tracker_angles(g.lat, g.lon, g.alt or 0, st.lat, st.lon, st.alt_msl)
+            st.dist_ground, st.bearing_ground, st.elev_ground = d, az, el
         if g.source == "none" or not self.show_ground:
             self.chip_gnd.set_visible(False)
             return
@@ -701,18 +830,29 @@ class FlyPage(Gtk.Box):
         if g.valid():
             txt = "GND GPS" + (f" · {g.sats}" if g.sats else "")
             if st.has_position:
-                d = haversine(g.lat, g.lon, st.lat, st.lon)
-                st.dist_ground = d
-                txt += f" · {fmt_dist(d)}"
-            st.ground_sats = g.sats
+                txt += f" · {fmt_dist(st.dist_ground)}"
             self.chip_gnd.set_text(txt)
             self.chip_gnd.set_css_classes(["chip", "info"])
         else:
-            st.ground_sats = g.sats
             waiting = g.source in ("esp32", "link") and not self.v.is_open
             self.chip_gnd.set_text("GND GPS · not connected" if waiting else "GND GPS · no fix")
             self.chip_gnd.set_css_classes(["chip", "warn"])
         self.chip_gnd.set_tooltip_text(g.status)
+
+    def _track_distance(self):
+        """Distance flown while armed (for the 'Distance flown' tile)."""
+        st = self.v.state
+        if not st.has_position:
+            return
+        last = getattr(self, "_last_pos", None)
+        if st.armed and last:
+            d = haversine(last[0], last[1], st.lat, st.lon)
+            if 0.3 < d < 200:
+                st.dist_traveled = getattr(st, "dist_traveled", 0.0) + d
+        if st.armed and not getattr(self, "_was_armed", False):
+            st.dist_traveled = 0.0          # new flight
+        self._last_pos = (st.lat, st.lon)
+        self._was_armed = st.armed
 
     def _update_chips(self):
         self._update_ground_chip()
@@ -720,17 +860,17 @@ class FlyPage(Gtk.Box):
         if not st.connected:
             self.chip_armed.set_text("DISCONNECTED")
             self.chip_armed.set_css_classes(["armed-chip", "disarmed"])
-            for c in (self.chip_mode, self.chip_gps, self.chip_batt, self.chip_link, self.chip_alt):
+            for c in (self.chip_mode, self.chip_batt, self.chip_link, self.chip_alt):
                 c.set_visible(False)
+            self.gps_card.set_visible(False)
             return
-        for c in (self.chip_mode, self.chip_gps, self.chip_batt, self.chip_link, self.chip_alt):
+        for c in (self.chip_mode, self.chip_batt, self.chip_link, self.chip_alt):
             c.set_visible(True)
         self.chip_armed.set_text("ARMED" if st.armed else "DISARMED")
         self.chip_armed.set_css_classes(["armed-chip", "armed" if st.armed else "disarmed"])
         self.chip_mode.set_text(st.mode)
         self.chip_alt.set_text(f"{st.alt:.1f} m · {st.groundspeed:.1f} m/s")
-        self.chip_gps.set_text(f"{GPS_FIX.get(st.gps_fix, 'GPS')} · {st.gps_sats}")
-        self.chip_gps.set_css_classes(["chip", "ok" if st.gps_fix >= 3 else ("warn" if st.gps_fix == 2 else "bad")])
+        self._update_gps_card(st)
         btxt = f"{st.voltage:.1f} V" + (f" · {st.battery_remaining}%" if st.battery_remaining >= 0 else "")
         self.chip_batt.set_text(btxt)
         lvl = "ok"
@@ -984,6 +1124,7 @@ class FlyPage(Gtk.Box):
             for t in self.tiles:
                 t.update(st)
             self._update_chips()
+            self._track_distance()
             self._update_replay()
             self.arm_btn.get_child().set_label("Disarm" if st.armed else "Arm")
         if self._n % 5 == 0:

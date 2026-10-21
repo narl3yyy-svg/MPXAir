@@ -39,38 +39,50 @@ class VehicleLayer:
             draw_tag(cr, x, y + 20, "AIR", (0.85, 0.25, 0.2) if st.armed else (0.85, 0.45, 0.12))
 
 
+TRAIL_CHOICES = [(10, "10 seconds"), (20, "20 seconds"), (30, "30 seconds"), (60, "1 minute"),
+                 (120, "2 minutes"), (300, "5 minutes"), (0, "The whole flight")]
+
+
 class TrailLayer:
-    def __init__(self, vehicle, maxlen=4000):
+    """The flight trail. Keeps only the last `seconds` of track (0 = everything)."""
+
+    def __init__(self, vehicle, seconds=20, maxlen=20000):
         self.v = vehicle
-        self.points = collections.deque(maxlen=maxlen)
+        self.seconds = seconds
+        self.points = collections.deque(maxlen=maxlen)     # (lat, lon, monotonic time)
 
     def sample(self):
         st = self.v.state
-        if not st.has_position:
-            return
-        if self.points:
-            la, lo = self.points[-1]
-            if haversine(la, lo, st.lat, st.lon) < 1.0:
-                return
-        self.points.append((st.lat, st.lon))
+        now = time.monotonic()
+        if st.has_position:
+            if not self.points or haversine(self.points[-1][0], self.points[-1][1], st.lat, st.lon) >= 0.5:
+                self.points.append((st.lat, st.lon, now))
+        if self.seconds:
+            cutoff = now - self.seconds
+            while self.points and self.points[0][2] < cutoff:
+                self.points.popleft()
 
     def clear(self):
         self.points.clear()
 
     def draw(self, cr, view):
-        if len(self.points) < 2:
+        n = len(self.points)
+        if n < 2:
             return
         cr.set_line_width(2.5)
-        cr.set_source_rgba(0.95, 0.2, 0.8, 0.85)
-        first = True
-        for la, lo in self.points:
+        cr.set_line_cap(1)
+        now = time.monotonic()
+        prev = None
+        for la, lo, t in self.points:
             x, y = view.to_screen(la, lo)
-            if first:
-                cr.move_to(x, y)
-                first = False
-            else:
+            if prev:
+                # older parts fade out when only the last few seconds are kept
+                a = 0.9 if not self.seconds else 0.25 + 0.65 * max(0.0, 1 - (now - t) / self.seconds)
+                cr.set_source_rgba(0.95, 0.2, 0.8, a)
+                cr.move_to(*prev)
                 cr.line_to(x, y)
-        cr.stroke()
+                cr.stroke()
+            prev = (x, y)
 
 
 class HomeLayer:

@@ -10,7 +10,53 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk  # noqa: E402
 from ..core import config  # noqa: E402
 from ..core.params import (SKIP_ON_LOAD, ParamDocs, format_value, load_param_file,  # noqa: E402
                            save_param_file)
-from .util import alert, background, button, clear_box, confirm, file_dialog, idle, label, toast  # noqa: E402
+from .paramform import param_tooltip  # noqa: E402
+from .util import (alert, background, button, clear_box, confirm, file_dialog, idle, label,  # noqa: E402
+                   readable, toast)
+
+
+# friendly names for parameter groups (the name prefix before the first "_")
+GROUP_NAMES = {
+    "ACRO": "Acro mode", "ADSB": "ADS-B", "AHRS": "AHRS (orientation)", "ANGLE": "Angle limits",
+    "ARMING": "Arming checks", "ARSPD": "Airspeed sensor", "ATC": "Attitude control (tuning)",
+    "AUTOTUNE": "Autotune", "AVOID": "Avoidance", "BARO": "Barometer", "BATT": "Battery",
+    "BCN": "Beacons", "BRD": "Board", "BTN": "Buttons", "CAM": "Camera", "CAN": "CAN bus",
+    "CHUTE": "Parachute", "CIRCLE": "Circle mode", "COMPASS": "Compass", "DISARM": "Disarming",
+    "EAHRS": "External AHRS", "EK2": "EKF2 (position estimate)", "EK3": "EKF3 (position estimate)",
+    "ESC": "ESC", "FENCE": "Geofence", "FLOW": "Optical flow", "FLTMODE": "Flight modes",
+    "FOLL": "Follow mode", "FRAME": "Frame", "FS": "Failsafes", "GND": "Ground (barometer)",
+    "GPS": "GPS", "GRIP": "Gripper", "INS": "Inertial sensors (IMU)", "LAND": "Landing",
+    "LGR": "Landing gear", "LIM": "Limits", "LOG": "Logging", "LOIT": "Loiter mode",
+    "MIS": "Mission", "MNT": "Camera mount (gimbal)", "MODE": "Flight modes", "MOT": "Motors",
+    "NAVL1": "L1 navigation", "NTF": "LEDs and buzzer", "OA": "Object avoidance",
+    "OSD": "On-screen display", "PHLD": "PosHold mode", "PILOT": "Pilot input",
+    "PLND": "Precision landing", "PRX": "Proximity sensors", "PSC": "Position control (tuning)",
+    "PTCH2SRV": "Pitch control", "Q": "QuadPlane (VTOL)", "RALLY": "Rally points",
+    "RC": "RC input (radio)", "RCMAP": "RC channel mapping", "RELAY": "Relays",
+    "RLL2SRV": "Roll control", "RNGFND": "Rangefinder", "RPM": "RPM sensors",
+    "RTL": "Return to launch", "SCHED": "Scheduler", "SCR": "Scripting", "SERIAL": "Serial ports",
+    "SERVO": "Servo / motor outputs", "SIM": "Simulator", "SR": "Telemetry stream rates",
+    "SRTL": "Smart RTL", "STAT": "Statistics", "STEER2SRV": "Steering", "SURFTRAK": "Surface tracking",
+    "SYSID": "System ID", "TCAL": "Temperature calibration", "TECS": "Speed and height control (TECS)",
+    "TERRAIN": "Terrain", "THR": "Throttle", "TRIM": "Trims", "TUNE": "Transmitter tuning knob",
+    "VISO": "Visual odometry", "WINCH": "Winch", "WP": "Waypoints", "WPNAV": "Waypoint navigation",
+    "YAW2SRV": "Yaw control", "ZIGZ": "ZigZag mode",
+}
+KEEP_DIGITS = {"EK2", "EK3", "Q"}
+
+
+def param_group(name):
+    head = name.split("_", 1)[0] if "_" in name else "OTHER"
+    if head not in KEEP_DIGITS:
+        head = head.rstrip("0123456789") or head
+    return head
+
+
+def group_title(key):
+    if key == "OTHER":
+        return "Other"
+    friendly = GROUP_NAMES.get(key)
+    return f"{friendly} ({key})" if friendly else key
 
 
 class ParamRow(GObject.Object):
@@ -22,6 +68,7 @@ class ParamRow(GObject.Object):
         self.value = value
         self.doc = doc or {}
         self.pending = None
+        self.group = param_group(name)
         self.search = (name + " " + self.doc.get("DisplayName", "") + " " +
                        self.doc.get("Description", "")).lower()
 
@@ -49,7 +96,7 @@ class ParamsPage(Gtk.Box):
 
         bar = Gtk.Box(spacing=8, margin_start=12, margin_end=12, margin_top=10, margin_bottom=8)
         self.search = Gtk.SearchEntry(placeholder_text="Search name or description…", hexpand=True)
-        self.search.connect("search-changed", lambda *_: self._refilter())
+        self.search.connect("search-changed", lambda *_: self._search_changed())
         bar.append(self.search)
         self.filter_dd = Gtk.DropDown(model=Gtk.StringList.new(
             ["All parameters", "Changed (not written)", "Standard", "Advanced"]))
@@ -94,7 +141,19 @@ class ParamsPage(Gtk.Box):
             cv.append_column(col)
         sc = Gtk.ScrolledWindow(hexpand=True)
         sc.set_child(cv)
-        paned.set_start_child(sc)
+        # groups sidebar + list
+        self.group = None
+        self.groups = Gtk.ListBox(css_classes=["navigation-sidebar"])
+        self.groups.connect("row-selected", self._group_selected)
+        gsc = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER, css_classes=["side-panel"])
+        gsc.set_size_request(240, -1)
+        gsc.set_child(self.groups)
+        lbox = Gtk.Box()
+        lbox.append(gsc)
+        lbox.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
+        sc.set_hexpand(True)
+        lbox.append(sc)
+        paned.set_start_child(lbox)
 
         self.editor = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin_start=14,
                               margin_end=14, margin_top=12, margin_bottom=12)
@@ -127,6 +186,7 @@ class ParamsPage(Gtk.Box):
         row = item.get_item()
         lb = item.get_child()
         lb.set_text(str(fn(row)))
+        lb.set_tooltip_text(param_tooltip(row.name, row.doc) if row.doc else row.name)
         if title == "Name":
             lb.set_css_classes(["mono"])
         elif title == "Value":
@@ -145,6 +205,7 @@ class ParamsPage(Gtk.Box):
             self.rows[name] = r
             items.append(r)
         self.store.splice(0, self.store.get_n_items(), items)
+        self._fill_groups()
         self.banner.set_revealed(not items)
         self._update_count()
         self._show_editor(None)
@@ -186,7 +247,54 @@ class ParamsPage(Gtk.Box):
         self.count_lbl.set_text(f"{self.filtered.get_n_items()} of {len(self.rows)} parameters shown"
                                 + (f" · {n} changed, not yet written" if n else ""))
 
+    def _fill_groups(self):
+        counts = {}
+        for r in self.rows.values():
+            counts[r.group] = counts.get(r.group, 0) + 1
+        # tiny groups go under "Other" so the list stays short
+        keys = sorted((k for k, n in counts.items() if n >= 2 or k in GROUP_NAMES),
+                      key=lambda k: group_title(k).lower())
+        other = sum(n for k, n in counts.items() if k not in keys)
+        self._small = {k for k in counts if k not in keys}
+        child = self.groups.get_first_child()
+        while child:
+            nxt = child.get_next_sibling()
+            self.groups.remove(child)
+            child = nxt
+        entries = [(None, "All parameters", len(self.rows))] + [(k, group_title(k), counts[k]) for k in keys]
+        if other:
+            entries.append(("OTHER", "Other", other))
+        for key, title, n in entries:
+            row = Gtk.ListBoxRow()
+            box = Gtk.Box(spacing=6, margin_start=6, margin_end=6, margin_top=3, margin_bottom=3)
+            box.append(label(title, hexpand=True, ellipsize=3))
+            box.append(label(str(n), ["dim-label", "caption", "numeric"]))
+            row.set_child(box)
+            row.key = key
+            if key and GROUP_NAMES.get(key):
+                row.set_tooltip_text(f"Parameters starting with {key}_")
+            self.groups.append(row)
+            if key == self.group:
+                self.groups.select_row(row)
+        if self.groups.get_selected_row() is None:
+            self.groups.select_row(self.groups.get_row_at_index(0))
+
+    def _search_changed(self):
+        # a search looks through every parameter, not just the selected group
+        if self.search.get_text().strip() and self.group is not None:
+            self.groups.select_row(self.groups.get_row_at_index(0))
+        self._refilter()
+
+    def _group_selected(self, lb, row):
+        self.group = getattr(row, "key", None) if row else None
+        self._refilter()
+
     def _match(self, r, *_):
+        if self.group == "OTHER":
+            if r.group not in getattr(self, "_small", set()) and r.group != "OTHER":
+                return False
+        elif self.group and r.group != self.group:
+            return False
         q = self.search.get_text().strip().lower()
         f = self.filter_dd.get_selected()
         if f == 1 and r.pending is None:
@@ -255,8 +363,8 @@ class ParamsPage(Gtk.Box):
             vals = list(d["values"])
             if not any(abs(k - float(cur)) < 1e-6 for k, _l in vals):
                 vals.append((float(cur), "(custom value)"))
-            combo = Adw.ComboRow(title="Value", enable_search=len(vals) > 10,
-                                 model=Gtk.StringList.new([f"{l}  ({format_value(k)})" for k, l in vals]))
+            combo = readable(Adw.ComboRow(title="Value", enable_search=len(vals) > 10,
+                                          model=Gtk.StringList.new([f"{l}  ({format_value(k)})" for k, l in vals])))
             combo.set_selected(next(i for i, (k, _l) in enumerate(vals) if abs(k - float(cur)) < 1e-6))
             grp.add(combo)
             getter = lambda: vals[combo.get_selected()][0]

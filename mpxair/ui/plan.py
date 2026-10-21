@@ -1,6 +1,7 @@
 """Plan page (Mission Planner's 'Flight Plan' view): missions, geofence, rally points."""
 import math
 import os
+import threading
 
 import gi
 
@@ -17,8 +18,9 @@ from .fly import map_type_button  # noqa: E402
 from .layers import (FENCE_EXCL_CIRC, FENCE_EXCL_POLY, FENCE_INCL_CIRC, FENCE_INCL_POLY,  # noqa: E402
                      FENCE_RETURN, FenceLayer, GroundLayer, MissionLayer, RallyLayer, VehicleLayer)
 from .mapview import MapView, draw_home, draw_marker  # noqa: E402
+from .progress import ProgressDialog  # noqa: E402
 from .util import (alert, ask_number, background, button, clear_box, confirm, file_dialog,  # noqa: E402
-                   fmt_dist, idle, label, toast)
+                   fmt_dist, idle, label, readable, short_description, toast)
 
 FRAMES = [(3, "Relative to home"), (0, "Above sea level"), (10, "Above terrain")]
 FENCE_NAMES = {FENCE_INCL_POLY: "Inclusion polygon", FENCE_EXCL_POLY: "Exclusion polygon",
@@ -888,10 +890,18 @@ class PlanPage(Gtk.Box):
             combo.set_selected(cmds.index(it.command))
             combo.connect("notify::selected", lambda c, *_: self._set_command(i, cmds[c.get_selected()]))
             grp.add(combo)
+            from ..mavlink import defs
+            cmd_doc = defs.ENUMS["MAV_CMD"][1].get(it.command, ("", ""))[1]
+            combo.set_tooltip_text(short_description(cmd_doc) or None)
+            pdocs = defs.CMD_PARAMS.get(it.command, {})
             labels = self.labels.get(it.command, ["", "", "", "", "Lat", "Long", "Alt"])
-            for attr, lbl in zip(("p1", "p2", "p3", "p4"), labels[:4]):
+            for k, (attr, lbl) in enumerate(zip(("p1", "p2", "p3", "p4"), labels[:4]), 1):
                 if lbl:
-                    self._num_row(grp, lbl, it, attr, -1e7, 1e7, 2)
+                    r = self._num_row(grp, lbl, it, attr, -1e7, 1e7, 2)
+                    doc = pdocs.get(k)
+                    if doc and (doc[2] or doc[0]):
+                        r.set_tooltip_text(short_description(doc[2] or doc[0])
+                                           + (f" ({doc[1]})" if doc[1] else ""))
             if labels[4] or it.has_location:
                 self._num_row(grp, "Latitude", it, "x", -90, 90, 7)
                 self._num_row(grp, "Longitude", it, "y", -180, 180, 7)
@@ -912,6 +922,7 @@ class PlanPage(Gtk.Box):
                 kind = Adw.ComboRow(title="Type", model=Gtk.StringList.new(
                     ["Inclusion (stay inside)", "Exclusion (keep out)"]))
                 kind.set_selected(0 if it.command == FENCE_INCL_POLY else 1)
+                readable(kind)
                 kind.connect("notify::selected", lambda c, *_: self._set_poly_kind(
                     i, FENCE_INCL_POLY if c.get_selected() == 0 else FENCE_EXCL_POLY))
                 grp.add(kind)
@@ -929,6 +940,7 @@ class PlanPage(Gtk.Box):
         row.set_value(float(getattr(it, attr)))
         row.connect("notify::value", lambda r, *_: self._spin_changed(it, attr, r.get_value()))
         grp.add(row)
+        return row
 
     def _spin_changed(self, it, attr, value):
         if abs(float(getattr(it, attr)) - value) < 1e-9:
@@ -1075,33 +1087,52 @@ class PlanPage(Gtk.Box):
             toast("Connect to a vehicle first")
             return
         win = self.get_root()
+        cancel = threading.Event()
+        dlg = ProgressDialog("Reading the plan", on_cancel=cancel.set)
+        dlg.status("Reading the plan from the aircraft", "Mission, geofence and rally points")
+        dlg.present(win)
 
         def work():
             out = {"errors": []}
-            for name, mt in (("mission", MISSION), ("fence", FENCE), ("rally", RALLY)):
+            for name, title, mt in (("mission", "Mission", MISSION), ("fence", "Geofence", FENCE),
+                                    ("rally", "Rally points", RALLY)):
+                h = [None]
+                idle(lambda t=title: h.__setitem__(0, dlg.step(f"{t}: reading…")))
+
+                def prog(a, b, t=title):
+                    idle(lambda: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
+                                  h[0] and dlg.update_step(h[0], f"{t}: item {a} of {b}")))
                 try:
-                    out[name] = self.v.mission.download(
-                        mt, progress=lambda a, b: idle(win.set_progress, a / max(1, b)))
+                    items = self.v.mission.download(mt, progress=prog, cancel=cancel)
+                    out[name] = items
+                    n = len(items) - (1 if mt == MISSION and items else 0)
+                    idle(lambda t=title, n=n: h[0] and dlg.update_step(
+                        h[0], f"{t}: {n} item{'s' if n != 1 else ''}", "ok"))
                 except RuntimeError as e:
                     out[name] = None
-                    out["errors"].append(f"{name}: {e}")
-            idle(win.set_progress, None)
+                    out["errors"].append(f"{title}: {e}")
+                    idle(lambda t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
+                    if cancel.is_set():
+                        break
             return out
 
         def done(out):
+            if cancel.is_set():
+                return
             self.push_undo()
             for name in ("mission", "fence", "rally"):
                 if out.get(name) is not None:
                     setattr(self.shared, name, out[name])
             self._load_from_shared()
             self.shared.hub.emit("mission-changed", "planner")
+            summary = (f"{max(0, len(self.items) - 1)} mission items, {len(self.fence)} fence items, "
+                       f"{len(self.rally)} rally points")
             if out["errors"]:
-                toast("Read finished with problems: " + "; ".join(out["errors"]), 6)
+                dlg.finish("Read finished with problems", summary, ok=False)
             else:
-                toast(f"Read {max(0, len(self.items) - 1)} mission items, {len(self.fence)} fence items, "
-                      f"{len(self.rally)} rally points")
+                dlg.finish("Plan read from the aircraft", summary, ok=True)
             self.fit()
-        background(work, done)
+        background(work, done, lambda e: dlg.finish("Read failed", str(e), ok=False))
 
     def write_to_vehicle(self):
         if not self.v.state.connected:
@@ -1117,29 +1148,39 @@ class PlanPage(Gtk.Box):
     def _do_write(self):
         win = self.get_root()
         items = [i.copy() for i in self.items]
-        h = items[0]
-        if not (h.x or h.y) and self.v.state.home_lat is not None:
-            h.x, h.y, h.z = self.v.state.home_lat, self.v.state.home_lon, self.v.state.home_alt or 0
-        h.command, h.frame = 16, 0
+        h0 = items[0]
+        if not (h0.x or h0.y) and self.v.state.home_lat is not None:
+            h0.x, h0.y, h0.z = self.v.state.home_lat, self.v.state.home_lon, self.v.state.home_alt or 0
+        h0.command, h0.frame = 16, 0
         fence = [i.copy() for i in self.fence]
         rally = [i.copy() for i in self.rally]
-        send_fence = bool(fence or self.shared.fence)
-        send_rally = bool(rally or self.shared.rally)
+        jobs = [("Mission", items, MISSION, len(items) - 1)]
+        if fence or self.shared.fence:
+            jobs.append(("Geofence", fence, FENCE, len(fence)))
+        if rally or self.shared.rally:
+            jobs.append(("Rally points", rally, RALLY, len(rally)))
+        cancel = threading.Event()
+        dlg = ProgressDialog("Writing the plan", on_cancel=cancel.set)
+        dlg.status("Writing the plan to the aircraft", ", ".join(j[0].lower() for j in jobs))
+        dlg.present(win)
 
         def work():
             res = []
-            prog = lambda a, b: idle(win.set_progress, a / max(1, b))
-            try:
-                self.v.mission.upload(items, MISSION, progress=prog)
-                res.append(f"mission ({len(items) - 1} items)")
-                if send_fence:
-                    self.v.mission.upload(fence, FENCE, progress=prog)
-                    res.append(f"fence ({len(fence)})")
-                if send_rally:
-                    self.v.mission.upload(rally, RALLY, progress=prog)
-                    res.append(f"rally ({len(rally)})")
-            finally:
-                idle(win.set_progress, None)
+            for title, its, mt, n in jobs:
+                h = [None]
+                idle(lambda t=title: h.__setitem__(0, dlg.step(f"{t}: writing…")))
+
+                def prog(a, b, t=title):
+                    idle(lambda: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
+                                  h[0] and dlg.update_step(h[0], f"{t}: item {a} of {b}")))
+                try:
+                    self.v.mission.upload(its, mt, progress=prog, cancel=cancel)
+                except RuntimeError as e:
+                    idle(lambda t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
+                    raise
+                idle(lambda t=title, n=n: h[0] and dlg.update_step(
+                    h[0], f"{t}: {n} item{'s' if n != 1 else ''} written and confirmed", "ok"))
+                res.append(f"{title.lower()} ({n})")
             self.v.request_message(242)
             return res
 
@@ -1150,9 +1191,14 @@ class PlanPage(Gtk.Box):
             self.dirty = False
             self.shared.hub.emit("mission-changed", "planner")
             self._update_info()
-            toast("Written to the vehicle: " + ", ".join(res))
+            dlg.finish("Plan written to the aircraft", "The aircraft confirmed: " + ", ".join(res), ok=True)
 
-        background(work, done, lambda e: alert(self.get_root(), "Write failed", str(e)))
+        def err(e):
+            if cancel.is_set():
+                return
+            dlg.finish("Write failed", f"{e}\n\nThe aircraft may still have its previous plan. "
+                       "Check the link and press Write again.", ok=False)
+        background(work, done, err)
 
     # ---------------------------------------------------------- files
     def load_file(self):

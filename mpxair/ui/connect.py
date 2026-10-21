@@ -10,6 +10,7 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from ..core import config  # noqa: E402
 from ..core.transport import BAUD_RATES, TransportError, list_serial_ports  # noqa: E402
+from .progress import ProgressDialog  # noqa: E402
 from .util import alert, background, idle, toast  # noqa: E402
 
 FIXED = [("udp", "UDP (listen)"), ("tcp", "TCP"), ("udpout", "UDP (send to)"),
@@ -221,20 +222,35 @@ class ConnectBar(Gtk.Box):
         cancel = self.cancel
         self._set_busy(True, "Connecting…")
         tlog = config.tlog_dir() if self.shared.settings.get("record_tlog", True) else None
+        where = {"serial": lambda: f"{spec.get('device')} at {spec.get('baud')} baud",
+                 "tcp": lambda: f"TCP {spec.get('host')}:{spec.get('port')}",
+                 "udp": lambda: f"UDP port {spec.get('port')}",
+                 "udpout": lambda: f"UDP {spec.get('host')}:{spec.get('port')}"}.get(spec["type"], lambda: "")()
+        dlg = ProgressDialog("Connecting", on_cancel=lambda: cancel.set())
+        dlg.status("Connecting to the aircraft", where)
+        self.dialog = dlg
+        dlg.present(self.get_root())
+        s_open = dlg.step(f"Opening {where}")
+        s_hb = [None]
 
         def work():
             self.v.connect(spec, tlog_dir=tlog)
+            idle(dlg.update_step, s_open, f"Opened {where}", "ok")
+            idle(lambda: s_hb.__setitem__(0, dlg.step("Waiting for the aircraft's heartbeat…")))
             board = getattr(self.v.transport, "espressif", False)
-            end = time.monotonic() + 30
+            start = time.monotonic()
+            end = start + 30
             while time.monotonic() < end:
                 if self.v.wait_heartbeat(1.0, cancel):
                     return "ok"
                 if cancel.is_set() or not self.v.is_open:
                     break
+                left = int(end - time.monotonic())
+                idle(lambda l=left: dlg.progress(None, f"Waiting… {l} s"))
                 if board:
                     # RFD/ESP32 ground-station board: ask it to identify itself
                     self.v.send_text("#GCS status")
-                    if self.v.gcs_board_seen and time.monotonic() > end - 24:
+                    if self.v.gcs_board_seen and time.monotonic() > start + 6:
                         return "board"
             if self.v.gcs_board_seen and self.v.is_open:
                 return "board"
@@ -243,8 +259,8 @@ class ConnectBar(Gtk.Box):
                 if cancel.is_set():
                     return "cancelled"
                 raise TransportError(
-                    "The link opened but no vehicle answered within 30 seconds.\n\n"
-                    "Check that the vehicle is powered, the right port is selected and the "
+                    "The link opened but no aircraft answered within 30 seconds.\n\n"
+                    "Check that the aircraft is powered, the right port is selected and the "
                     "baud rate matches (57600 for most telemetry radios, 115200 for USB).")
             return "ok"
 
@@ -255,16 +271,29 @@ class ConnectBar(Gtk.Box):
                 self._board_found()
                 self._set_busy(False, "Waiting for aircraft")
                 self.btn.set_tooltip_text("Connected to the ground station board — click to disconnect")
-                toast("Ground station board connected. Waiting for the aircraft…", 5)
+                if s_hb[0]:
+                    dlg.update_step(s_hb[0], "No heartbeat from the aircraft yet", "warn")
+                dlg.step("Ground station board found — its GPS is being read", "ok")
+                dlg.finish("Ground station connected",
+                           "Waiting for the aircraft. When it powers up, MPXAir connects to it and "
+                           "loads its parameters automatically.", ok=True, close_after=5)
+                self.dialog = None
                 return
             if res != "ok":
                 self.status.set_text("")
+                dlg.close()
+                self.dialog = None
                 return
+            if s_hb[0]:
+                st = self.v.state
+                dlg.update_step(s_hb[0], f"Heartbeat received from {st.vclass} (system {st.sysid})", "ok")
             self._vehicle_ready()
 
         def error(e):
             self._set_busy(False)
             self.v.disconnect()
+            dlg.close()
+            self.dialog = None
             alert(self.get_root(), "Connection failed", str(e))
 
         background(work, done, error)
@@ -289,43 +318,79 @@ class ConnectBar(Gtk.Box):
             self._board_found()
         st = self.v.state
         self.btn.set_tooltip_text(f"Connected to {st.vclass} #{st.sysid} — click to disconnect")
-        toast(f"Connected to {st.vclass} (system {st.sysid})")
         self.shared.hub.emit("connected")
         self._after_connect()
 
     def _after_connect(self):
-        """Download parameters, then the mission, fence and rally points (like MP)."""
+        """Download parameters, then the mission, fence and rally points (like MP),
+        showing each step in the connection pop-up."""
         win = self.get_root()
         v = self.v
+        st = v.state
+        dlg = getattr(self, "dialog", None)
+        if dlg is None:
+            dlg = ProgressDialog("Connecting")
+            dlg.present(win)
+            dlg.step(f"Heartbeat received from {st.vclass} (system {st.sysid})", "ok")
+        self.dialog = None
+        dlg.set_button("Hide", cancel=False)
+        dlg.status(f"Connected to {st.vclass} #{st.sysid}", "Downloading the aircraft's settings…")
+        s_par = dlg.step("Parameters")
+        dlg.progress(None, "Asking for the parameter list…")
 
         def prog(got, total):
-            idle(win.set_progress, got / total if total else 0.0)
+            def ui():
+                if total:
+                    dlg.progress(got / total, f"Parameters {got} / {total}")
+                    dlg.update_step(s_par, f"Parameters {got} / {total}")
+                win.set_progress(got / total if total else 0.0)
+            idle(ui)
 
         def work():
             ok = v.params.fetch(progress=prog)
             idle(win.set_progress, None)
+            got, total = len(v.params.values), v.params.count
+            idle(dlg.update_step, s_par, f"Parameters {got} / {total}" + ("" if ok else " (some missing)"),
+                 "ok" if ok else "warn")
             idle(self.shared.hub.emit, "params-loaded", ok)
             from ..core.mission import FENCE, MISSION, RALLY
             out = {}
-            for name, mt in (("mission", MISSION), ("fence", FENCE), ("rally", RALLY)):
+            for name, label_, mt in (("mission", "Mission", MISSION), ("fence", "Geofence", FENCE),
+                                     ("rally", "Rally points", RALLY)):
                 if not v.is_open:
                     break
+                h = [None]
+                idle(lambda l=label_: h.__setitem__(0, dlg.step(f"{l}: reading…")))
+                idle(dlg.progress, None, f"Reading {label_.lower()}…")
                 try:
                     out[name] = v.mission.download(mt)
-                except RuntimeError:
+                    n = len(out[name]) - (1 if mt == MISSION and out[name] else 0)
+                    idle(lambda l=label_, n=n: h[0] and dlg.update_step(
+                        h[0], f"{l}: {n} item{'s' if n != 1 else ''}", "ok"))
+                except RuntimeError as e:
                     out[name] = None
+                    idle(lambda l=label_, e=e: h[0] and dlg.update_step(h[0], f"{l}: {e}", "warn"))
             return ok, out
 
         def done(res):
             ok, out = res
-            if not ok and v.is_open:
-                toast(f"Only {len(v.params.values)} of {v.params.count} parameters arrived", 5)
             for name in ("mission", "fence", "rally"):
                 if out.get(name) is not None:
                     setattr(self.shared, name, out[name])
             self.shared.hub.emit("mission-changed", "vehicle")
+            fw = st.firmware or st.vclass
+            if not v.is_open:
+                dlg.finish("Connection lost", "The link dropped while loading.", ok=False)
+            else:
+                dlg.finish(f"Connected to {fw}",
+                           f"{len(v.params.values)} parameters loaded"
+                           + ("" if ok else f" (of {v.params.count}; the rest will be fetched when needed)"),
+                           ok=True, close_after=2.5)
 
-        background(work, done, lambda e: idle(win.set_progress, None))
+        def err(e):
+            idle(win.set_progress, None)
+            dlg.finish("Couldn't load the aircraft's settings", str(e), ok=False)
+        background(work, done, err)
 
     def _on_disconnected(self, err):
         self.waiting_for_aircraft = False

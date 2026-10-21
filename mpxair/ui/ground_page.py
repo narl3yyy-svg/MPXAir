@@ -7,7 +7,7 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from ..core.ground import tracker_angles  # noqa: E402
 from ..core.transport import BAUD_RATES, TransportError, list_serial_ports  # noqa: E402
-from .util import alert, button, confirm, fmt_dist, label, toast  # noqa: E402
+from .util import alert, button, confirm, fmt_dist, label, readable, toast  # noqa: E402
 
 SOURCES = [
     ("none", "Not used", "MPXAir doesn't know where you are."),
@@ -108,6 +108,7 @@ class GroundPage(Gtk.Box):
             self.gps_port.set_selected(self.ports.index(cfg["device"]))
         self.gps_baud = Adw.ComboRow(title="GPS baud rate", model=Gtk.StringList.new([str(b) for b in BAUD_RATES]))
         self.gps_baud.set_selected(BAUD_RATES.index(int(cfg.get("baud", 9600))) if int(cfg.get("baud", 9600)) in BAUD_RATES else 0)
+        readable(self.gps_port)
         grp.add(self.gps_port)
         grp.add(self.gps_baud)
         self.m_lat = self._spin("Latitude", -90, 90, 7, cfg.get("lat", 0))
@@ -268,11 +269,14 @@ class GroundPage(Gtk.Box):
         ids = [x[0] for x in TRACKER_TYPES]
         self.t_type = Adw.ComboRow(title="Tracker hardware", model=Gtk.StringList.new([x[1] for x in TRACKER_TYPES]))
         self.t_type.set_selected(ids.index(cfg.get("type", "maestro")) if cfg.get("type") in ids else 0)
+        readable(self.t_type)
+        self.t_type.set_tooltip_text("The pan/tilt controller your antenna is mounted on")
         grp.add(self.t_type)
         self.t_ports, model = port_model()
         self.t_port = Adw.ComboRow(title="Serial port", model=model)
         if cfg.get("device") in self.t_ports:
             self.t_port.set_selected(self.t_ports.index(cfg["device"]))
+        readable(self.t_port)
         grp.add(self.t_port)
         self.t_baud = Adw.ComboRow(title="Baud rate", model=Gtk.StringList.new([str(b) for b in BAUD_RATES]))
         b = int(cfg.get("baud", 9600))

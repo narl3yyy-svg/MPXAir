@@ -230,3 +230,88 @@ class CairoWidget(Gtk.Widget):
 
     def draw(self, cr, w, h):
         pass
+
+
+# ---------------------------------------------------------------- readable choices
+def readable(row):
+    """Make an existing Adw.ComboRow show its full value (under the title) and wrap
+    long names in its list."""
+    row.set_use_subtitle(True)
+    # the shown value and the search box both read the option's text through this
+    row.set_expression(Gtk.PropertyExpression.new(Gtk.StringObject, None, "string"))
+    lf = Gtk.SignalListItemFactory()
+    lf.connect("setup", lambda f, it: it.set_child(Gtk.Label(xalign=0, wrap=True, max_width_chars=48,
+                                                             margin_top=2, margin_bottom=2)))
+    lf.connect("bind", lambda f, it: it.get_child().set_text(it.get_item().get_string()))
+    row.set_list_factory(lf)
+    return row
+
+
+def combo_row(title, labels, selected=0, on_change=None, tooltip=None, tag=None):
+    """An Adw.ComboRow that never cuts its value off: the chosen option is shown in
+    full under the title, and the open list wraps long option names."""
+    row = readable(Adw.ComboRow(title=title, model=Gtk.StringList.new(list(labels)),
+                                enable_search=len(labels) > 12))
+    if 0 <= selected < len(labels):
+        row.set_selected(selected)
+    if tag:
+        row.add_suffix(Gtk.Label(label=tag, css_classes=["dim-label", "caption", "mono"]))
+    if tooltip:
+        row.set_tooltip_text(tooltip)
+    if on_change:
+        row.connect("notify::selected", lambda r, *_: on_change(r.get_selected()))
+    return row
+
+
+class RadioRows:
+    """Radio-button rows with a title and a one-line explanation, added to an
+    Adw.PreferencesGroup. options: [(id, title, explanation)]."""
+
+    def __init__(self, grp, options, current, on_change=None):
+        self.ids = [o[0] for o in options]
+        self.checks = []
+        self.rows = []
+        self.on_change = on_change
+        first = None
+        for oid, title, sub in options:
+            chk = Gtk.CheckButton(valign=Gtk.Align.CENTER)
+            if first is None:
+                first = chk
+            else:
+                chk.set_group(first)
+            row = Adw.ActionRow(title=title, subtitle=sub or "", activatable_widget=chk)
+            row.set_subtitle_lines(3)
+            row.add_prefix(chk)
+            chk.set_active(oid == current)
+            chk.connect("toggled", self._toggled)
+            grp.add(row)
+            self.checks.append(chk)
+            self.rows.append(row)
+        if not any(c.get_active() for c in self.checks):
+            self.checks[0].set_active(True)
+
+    def _toggled(self, chk):
+        if chk.get_active() and self.on_change:
+            self.on_change(self.ids[self.get_selected()])
+
+    def get_selected(self):
+        for i, c in enumerate(self.checks):
+            if c.get_active():
+                return i
+        return 0
+
+    def get_id(self):
+        return self.ids[self.get_selected()]
+
+    def set_selected(self, i):
+        self.checks[i].set_active(True)
+
+
+def short_description(text, limit=220):
+    """First sentence or two of a parameter description, for tooltips and subtitles."""
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    dot = cut.rfind(". ")
+    return (cut[:dot + 1] if dot > 60 else cut.rstrip() + "…")

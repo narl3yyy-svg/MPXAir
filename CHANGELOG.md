@@ -2,6 +2,24 @@
 
 All notable changes to MPXAir are listed here.
 
+## 1.1.0 — 2026-10-21
+
+### Added
+- **Connection progress window**, as in Mission Planner: link, heartbeat, parameters counting up, then
+  mission, geofence and rally points. It closes on its own when done.
+- **Plan Read and Write progress windows**: item-by-item progress and what the aircraft confirmed.
+- **Quick view**: add or remove tiles (2–16), and more than 45 values in sections.
+- **Parameters groups sidebar** with friendly names.
+- **Hover descriptions** for parameters and settings: Setup forms, the Parameters list, mission item
+  fields and Preferences.
+- **Flight trail length** setting (10 s … whole flight). Older track is cleared automatically and fades out.
+- **Aircraft GPS status** card at the bottom-left of the Fly map.
+
+### Changed
+- Drop-down settings show their full value under the setting name, and long option names wrap. This
+  fixes unreadable values such as Battery monitoring.
+- Preferences → Maps → Internet use is now a list of three clearly explained choices.
+
 ## 1.0.0 — 2026-10-21
 
 First public release.

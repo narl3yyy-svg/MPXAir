@@ -8,11 +8,14 @@ from gi.repository import Adw, Gtk  # noqa: E402
 from ..core import config  # noqa: E402
 from ..core.params import ParamDocs  # noqa: E402
 from ..maps import tiles  # noqa: E402
-from .util import background, button, toast  # noqa: E402
+from .util import RadioRows, background, button, combo_row, toast  # noqa: E402
 
-MAP_MODES = [("online", "Online — download and refresh old tiles"),
-             ("cache", "Saver — only download tiles I don't have"),
-             ("offline", "Offline — never use the internet")]
+MAP_MODES = [("online", "Online",
+              "Download maps as you look at them and refresh saved tiles when they get old."),
+             ("cache", "Saver",
+              "Only download tiles you don't have yet. Saved tiles are never refreshed."),
+             ("offline", "Offline",
+              "Never use the internet. Only maps already saved on this computer are shown.")]
 
 
 class PreferencesDialog(Adw.PreferencesDialog):
@@ -26,15 +29,26 @@ class PreferencesDialog(Adw.PreferencesDialog):
         gen = Adw.PreferencesPage(title="General", icon_name="preferences-system-symbolic")
         g = Adw.PreferencesGroup(title="Appearance")
         themes = [("system", "Follow the system"), ("light", "Light"), ("dark", "Dark")]
-        theme = Adw.ComboRow(title="Style", model=Gtk.StringList.new([t[1] for t in themes]))
         ids = [t[0] for t in themes]
-        theme.set_selected(ids.index(self.s.get("theme", "system")) if self.s.get("theme") in ids else 0)
-        theme.connect("notify::selected", lambda r, *_: self._set("theme", ids[r.get_selected()], self.on_theme))
+        theme = combo_row("Style", [t[1] for t in themes],
+                          ids.index(self.s.get("theme", "system")) if self.s.get("theme") in ids else 0,
+                          lambda i: self._set("theme", ids[i], self.on_theme),
+                          tooltip="Light or dark colours, or follow Ubuntu's setting")
         g.add(theme)
         gen.add(g)
         g = Adw.PreferencesGroup(title="Flying")
-        self._spin(g, "Default waypoint altitude (m)", "default_alt", 1, 5000)
-        self._spin(g, "Default takeoff altitude (m)", "takeoff_alt", 1, 500, default=10)
+        self._spin(g, "Default waypoint altitude (m)", "default_alt", 1, 5000).set_tooltip_text(
+            "Height above home given to new waypoints you add on the Plan screen")
+        self._spin(g, "Default takeoff altitude (m)", "takeoff_alt", 1, 500, default=10).set_tooltip_text(
+            "Height the Takeoff button climbs to, unless you type another")
+        from .layers import TRAIL_CHOICES
+        secs = [c[0] for c in TRAIL_CHOICES]
+        cur = int(self.s.get("trail_seconds", 20))
+        g.add(combo_row("Flight trail on the map", [c[1] for c in TRAIL_CHOICES],
+                        secs.index(cur) if cur in secs else 1,
+                        lambda i: self._set_trail(secs[i]),
+                        tooltip="Older parts of the trail are cleared automatically; "
+                                "only this much stays on the map"))
         rec = Adw.SwitchRow(title="Record telemetry logs (.tlog)",
                             subtitle=f"Saved in {config.tlog_dir()}", active=self.s.get("record_tlog", True))
         rec.connect("notify::active", lambda r, *_: self._set("record_tlog", r.get_active()))
@@ -43,19 +57,19 @@ class PreferencesDialog(Adw.PreferencesDialog):
         self.add(gen)
 
         # --------------------------------------------------------------- maps
-        mp = Adw.PreferencesPage(title="Maps", icon_name="mark-location-symbolic")
+        mp = self.maps_page = Adw.PreferencesPage(title="Maps", icon_name="mark-location-symbolic")
         g = Adw.PreferencesGroup(title="Map source")
         pids = [p.id for p in tiles.PROVIDERS]
-        prov = Adw.ComboRow(title="Map type", model=Gtk.StringList.new([p.name for p in tiles.PROVIDERS]))
-        prov.set_selected(pids.index(self.s.get("map_provider")) if self.s.get("map_provider") in pids else 0)
-        prov.connect("notify::selected", lambda r, *_: self._set_provider(pids[r.get_selected()]))
+        prov = combo_row("Map type", [p.name for p in tiles.PROVIDERS],
+                         pids.index(self.s.get("map_provider")) if self.s.get("map_provider") in pids else 0,
+                         lambda i: self._set_provider(pids[i]),
+                         tooltip="The map shown on the Fly, Plan and Logs screens")
         g.add(prov)
-        mids = [m[0] for m in MAP_MODES]
-        mode = Adw.ComboRow(title="Internet use", model=Gtk.StringList.new([m[1] for m in MAP_MODES]))
-        mode.set_selected(mids.index(self.s.get("map_mode", "online")) if self.s.get("map_mode") in mids else 0)
-        mode.connect("notify::selected", lambda r, *_: self._set("map_mode", mids[r.get_selected()]))
-        g.add(mode)
-        self._spin(g, "Refresh tiles older than (days)", "map_max_age_days", 1, 3650)
+        mp.add(g)
+        g = Adw.PreferencesGroup(title="Internet use", description="How MPXAir downloads map tiles.")
+        RadioRows(g, MAP_MODES, self.s.get("map_mode", "online"), lambda mid: self._set("map_mode", mid))
+        age = self._spin(g, "Refresh tiles older than (days)", "map_max_age_days", 1, 3650)
+        age.set_subtitle("Online mode only: older saved tiles are downloaded again")
         off = Adw.ActionRow(title="Offline maps", subtitle="Download areas for flying without internet",
                             activatable=True)
         off.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
@@ -90,6 +104,13 @@ class PreferencesDialog(Adw.PreferencesDialog):
         self.s.set(key, value)
         if then:
             then()
+
+    def _set_trail(self, seconds):
+        fly = self.shared.window.pages.get("fly") if self.shared.window else None
+        if fly:
+            fly.set_trail_seconds(seconds)
+        else:
+            self.s.set("trail_seconds", seconds)
 
     def _set_rate(self, key, value):
         rates = dict(self.s.get("stream_rates") or {})

@@ -10,7 +10,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from ..maps import tiles  # noqa: E402
-from .util import alert, button, confirm, toast  # noqa: E402
+from .util import alert, button, confirm, readable, toast  # noqa: E402
 
 MAX_TILES = 150_000
 AVG_TILE_KB = 22
@@ -41,10 +41,12 @@ class OfflineMapsDialog(Adw.Dialog):
         ids = [p.id for p in self.provs]
         if cur in ids:
             self.prov_row.set_selected(ids.index(cur))
+        readable(self.prov_row)
         grp.add(self.prov_row)
         self.area_row = Adw.ComboRow(title="Area", model=Gtk.StringList.new(
             ["What the map shows now", "1 km around the map centre", "3 km around the map centre",
              "10 km around the map centre"]))
+        readable(self.area_row)
         grp.add(self.area_row)
         self.zmin = Adw.SpinRow.new_with_range(1, 19, 1)
         self.zmin.set_title("Least detail (zoom)")
