@@ -423,7 +423,9 @@ class DemoServer:
                 reply = {
                     "fw": "1.7-demo", "elrs": "3.5", "name": "Demo ground station", "link": "connected",
                     "rssi": -61, "lq": 100, "snr": 9, "txMav": False, "uid": [1, 2, 3, 4, 5, 6],
-                    "up": int(time.monotonic() - self.sim.boot), "rcHz": 25, "follow": self.board_follow,
+                    "up": int(time.monotonic() - self.sim.boot), "rcHz": 20, "follow": int(self.board_follow),
+                    "espTemp": 43.3, "rfdLq": 100, "standalone": 0,
+                    "radio": {"rate": 28, "hz": 333, "tlm": 2, "pwr": 1, "model": 255},
                     "cnt": {"rc": 1000, "follow": 50 if self.board_follow else 0, "usbToRfd": 1, "rfdToUsb": 1},
                     "gps": {"fix": True, "q": 1, "sats": 11, "hdop": 0.8, "lat": int(lat * 1e7),
                             "lon": int(lon * 1e7), "altMm": int(self.sim.home[2] * 1000), "spd": 0.0,

@@ -58,11 +58,20 @@ class GroundLocation:
         self.last_raw_time = 0.0
 
     def valid(self):
+        """A current position (used by Follow Me and the antenna tracker)."""
         if self.lat is None:
             return False
         if self.source == "manual":
             return True
-        return time.time() - self.updated < 10
+        return self.fix and time.time() - self.updated < 15
+
+    def last_known(self, max_age=1800):
+        """(lat, lon, age_seconds) of the last good position, shown on the map even after
+        the ground GPS loses its fix or the board restarts. None if there isn't one."""
+        if self.lat is None or self.source == "none":
+            return None
+        age = 0.0 if self.source == "manual" else time.time() - self.updated
+        return (self.lat, self.lon, age) if age <= max_age else None
 
     def _set(self, lat, lon, alt=None, sats=0):
         self.lat, self.lon = lat, lon

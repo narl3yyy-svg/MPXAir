@@ -45,6 +45,9 @@ class Hud(CairoWidget):
         cr.set_source_rgb(*color)
         cr.move_to(x, y)
         cr.show_text(text)
+        # show_text leaves the pen at the end of the text; clear it so the next arc or
+        # line doesn't start with a stray stroke from here
+        cr.new_path()
         return ext.width
 
     def draw(self, cr, w, h):
@@ -83,7 +86,7 @@ class Hud(CairoWidget):
         cr.select_font_face("Sans", 0, 1)
         cr.set_font_size(10)
         cr.set_line_width(1.5)
-        for p in range(-40, 45, 5):
+        for p in range(-90, 95, 5):
             if p == 0:
                 continue
             y = -p * ppd
@@ -91,9 +94,13 @@ class Hud(CairoWidget):
                 continue
             half = w * (0.12 if p % 10 == 0 else 0.06)
             cr.set_source_rgba(1, 1, 1, 0.9)
+            # below the horizon the rungs are dashed (as in Mission Planner)
+            cr.set_dash([6, 4] if p < 0 else [])
+            cr.new_path()
             cr.move_to(-half, y)
             cr.line_to(half, y)
             cr.stroke()
+            cr.set_dash([])
             if p % 10 == 0:
                 for sx, al in ((-half - 6, "r"), (half + 6, "l")):
                     self._text(cr, sx, y + 4, str(abs(p)), 10, align=al, shadow=False)
@@ -105,6 +112,7 @@ class Hud(CairoWidget):
         cr.translate(cx, cy)
         cr.set_source_rgba(1, 1, 1, 0.9)
         cr.set_line_width(1.5)
+        cr.new_path()
         cr.arc(0, 0, r, math.radians(-150), math.radians(-30))
         cr.stroke()
         for a in (-60, -45, -30, -20, -10, 0, 10, 20, 30, 45, 60):

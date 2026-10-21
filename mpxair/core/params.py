@@ -200,8 +200,12 @@ class ParamDocs:
     ONLINE = {"copter": "ArduCopter", "plane": "ArduPlane", "rover": "Rover",
               "sub": "ArduSub", "tracker": "AntennaTracker"}
     URL = "https://autotest.ardupilot.org/Parameters/{}/apm.pdef.xml"
+    # descriptions that exactly match a released firmware (what Mission Planner uses)
+    VERSIONED = {"copter": "Copter", "plane": "Plane", "rover": "Rover", "sub": "Sub", "tracker": "Tracker"}
+    VURL = "https://autotest.ardupilot.org/Parameters/versioned/{}/stable-{}/apm.pdef.xml"
 
     _cache = {}
+    _version = {}           # vclass -> "4.7.1" of the connected aircraft
 
     @classmethod
     def online_dir(cls):
@@ -212,12 +216,58 @@ class ParamDocs:
 
     @classmethod
     def for_class(cls, vclass):
+        """Bundled docs, overridden by ArduPilot's latest (if downloaded), overridden by the
+        docs for the connected aircraft's exact firmware version (if downloaded)."""
         key = vclass if vclass in cls.SECTION else "copter"
-        if key not in cls._cache:
+        ver = cls._version.get(key)
+        ck = (key, ver)
+        if ck not in cls._cache:
             docs = cls._load_bundled(cls.SECTION[key])
             docs.update(cls._load_pdef(os.path.join(cls.online_dir(), cls.ONLINE[key] + ".xml")))
-            cls._cache[key] = docs
-        return cls._cache[key]
+            if ver:
+                docs.update(cls._load_pdef(cls._versioned_path(key, ver)))
+            cls._cache[ck] = docs
+        return cls._cache[ck]
+
+    @classmethod
+    def _versioned_path(cls, vclass, ver):
+        return os.path.join(cls.online_dir(), f"{cls.VERSIONED.get(vclass, 'Copter')}-{ver}.xml")
+
+    @staticmethod
+    def version_of(flight_sw_version):
+        """'4.7.1' for an official release, else None (betas/dev builds have no versioned docs)."""
+        sw = int(flight_sw_version or 0)
+        if not sw or (sw & 0xFF) != 255:
+            return None
+        return f"{(sw >> 24) & 0xFF}.{(sw >> 16) & 0xFF}.{(sw >> 8) & 0xFF}"
+
+    @classmethod
+    def use_firmware(cls, vclass, flight_sw_version, download=True):
+        """Pick the docs for this firmware, downloading them once if needed (worker thread).
+        Returns a short status text."""
+        ver = cls.version_of(flight_sw_version)
+        key = vclass if vclass in cls.SECTION else "copter"
+        if not ver or key not in cls.VERSIONED:
+            return None
+        path = cls._versioned_path(key, ver)
+        if not os.path.exists(path) and download:
+            import urllib.request
+            try:
+                req = urllib.request.Request(cls.VURL.format(cls.VERSIONED[key], ver),
+                                             headers={"User-Agent": "MPXAir/1.0"})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    data = r.read()
+                ET.fromstring(data)
+                with open(path + ".part", "wb") as fh:
+                    fh.write(data)
+                os.replace(path + ".part", path)
+            except Exception as e:
+                cls._version.pop(key, None)
+                return f"Descriptions for {ver} couldn't be downloaded ({e.__class__.__name__}); using the bundled ones"
+        if os.path.exists(path):
+            cls._version[key] = ver
+            return f"Descriptions matched to firmware {ver}"
+        return None
 
     @classmethod
     def source_text(cls):
@@ -240,7 +290,8 @@ class ParamDocs:
             with open(path + ".part", "wb") as fh:
                 fh.write(data)
             os.replace(path + ".part", path)
-            cls._cache.pop(vclass, None)
+            for k in [k for k in cls._cache if k[0] == vclass]:
+                cls._cache.pop(k, None)
             n += 1
         return n
 

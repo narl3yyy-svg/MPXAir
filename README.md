@@ -130,8 +130,8 @@ New USB devices are noticed as soon as they're plugged in. Every session is reco
 - **Quick view**: 2 to 16 tiles. Add a tile with **Add a tile**. Click a tile to choose from 45
   values in sections (height, speed and attitude, navigation, battery, GPS and health, telemetry link,
   ground station), or to remove it.
-- **GPS status at the bottom-left of the map**, like Mission Planner: fix type, satellites and HDOP,
-  coloured by quality.
+- **GPS status cards**, like Mission Planner: the aircraft's GPS at the bottom-left of the map, the ground
+  station's GPS at the bottom-right.
 - **Flight trail** that keeps only the last 10 s, 20 s (default), 30 s, 1, 2 or 5 minutes, or the whole
   flight. Older track fades and is cleared automatically. Set it on the Actions tab or in Preferences.
   **Clear Track** still clears it at once.

@@ -27,7 +27,7 @@ def list_serial_ports():
         for dev in sorted(glob.glob(pat)):
             desc = by_id.get(dev, "")
             desc = re.sub(r"-if\d+(-port\d+)?$", "", desc.replace("usb-", ""))
-            # drop the trailing serial number (e.g. _28:84:85:67:23:24 or _A50285BI)
+            # drop the trailing serial number (e.g. _AA:BB:CC:DD:EE:FF or _A1B2C3D4)
             desc = re.sub(r"_[0-9A-Fa-f:]{6,}$", "", desc).replace("_", " ")
             ports.append((dev, desc))
     return ports

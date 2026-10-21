@@ -370,11 +370,15 @@ class GroundLayer:
         self.visible = visible
 
     def draw(self, cr, view):
-        if not self.visible() or not self.g.valid():
+        if not self.visible():
             return
-        x, y = view.to_screen(self.g.lat, self.g.lon)
+        last = self.g.last_known()
+        if last is None:
+            return
+        live = self.g.valid()
+        x, y = view.to_screen(last[0], last[1])
         st = self.v.state
-        if st.has_position and st.connected:
+        if live and st.has_position and st.connected:
             vx, vy = view.to_screen(st.lat, st.lon)
             cr.new_path()
             cr.set_dash([5, 5])
@@ -393,9 +397,14 @@ class GroundLayer:
                 nx, ny = -(vy - y) / L, (vx - x) / L
                 mx, my = x + (vx - x) * 0.4 + nx * 12, y + (vy - y) * 0.4 + ny * 12
                 outline_text(cr, mx, my, txt, (0.7, 0.92, 1.0), size=11, center=True)
-        draw_ground_station(cr, x, y, self.g.fix or self.g.source == "manual")
-        sats = f" · {self.g.sats} sats" if self.g.sats else ""
-        draw_tag(cr, x, y + 19, "GROUND" + sats, (0.10, 0.45, 0.85))
+        draw_ground_station(cr, x, y, live)
+        if live:
+            sats = f" · {self.g.sats} sats" if self.g.sats and self.g.source != "manual" else ""
+            draw_tag(cr, x, y + 19, "GROUND" + sats, (0.10, 0.45, 0.85))
+        else:
+            age = last[2]
+            when = f"{age:.0f} s" if age < 90 else f"{age / 60:.0f} min"
+            draw_tag(cr, x, y + 19, f"GROUND · no fix · last {when} ago", (0.42, 0.46, 0.52))
 
     def hit(self, view, x, y):
         return None

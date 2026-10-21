@@ -34,6 +34,11 @@ New devices are noticed as soon as they're plugged in.</p>
 <p>If you connect to a ground station board (for example the <a href="rfd900-esp32.html">RFD900 + ESP32 board</a>) while the aircraft is switched off, MPXAir keeps the link open and says <i>Waiting for aircraft</i>.
 The ground station's GPS is shown straight away. When the aircraft powers up, MPXAir connects to it and loads its parameters automatically.</p>
 
+<h2>Automatic reconnect</h2>
+<p>If a USB device drops off (unplugged, or a power dip on the board), MPXAir shows <i>Reconnecting…</i> and waits up to two minutes.
+It recognises the same device by its unique USB ID, even if it comes back under a new name (for example <code>ttyACM1</code> instead of <code>ttyACM0</code>),
+then reconnects and reloads everything. Press <b>Stop</b> to give up.</p>
+
 <h2>Telemetry recording</h2>
 <p>Everything received while connected is saved to a telemetry log (<code>.tlog</code>) in
 <code>~/Documents/MPXAir/telemetry-logs</code>. You can <a href="logs.html#replay-a-flight">replay it</a> later. Turn this off in Preferences → General.</p>

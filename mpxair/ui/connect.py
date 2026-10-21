@@ -17,6 +17,24 @@ FIXED = [("udp", "UDP (listen)"), ("tcp", "TCP"), ("udpout", "UDP (send to)"),
          ("demo", "Demo drone (built-in)")]
 
 
+def usb_identity(device):
+    """A stable name for a USB serial device (its /dev/serial/by-id entry), or None."""
+    import glob
+    import os
+    real = os.path.realpath(device)
+    for link in glob.glob("/dev/serial/by-id/*"):
+        if os.path.realpath(link) == real:
+            return link
+    return None
+
+
+def find_usb_device(identity):
+    import os
+    if identity and os.path.exists(identity):
+        return os.path.realpath(identity)
+    return None
+
+
 class ConnectBar(Gtk.Box):
     def __init__(self, shared):
         super().__init__(spacing=6, css_classes=["connect-bar"])
@@ -172,6 +190,11 @@ class ConnectBar(Gtk.Box):
 
     # ------------------------------------------------------------ connect
     def toggle(self):
+        if getattr(self, "reconnecting", False):
+            self.reconnecting = False
+            self._set_busy(False)
+            toast("Stopped reconnecting")
+            return
         if self.connecting:
             if self.cancel:
                 self.cancel.set()
@@ -218,6 +241,9 @@ class ConnectBar(Gtk.Box):
             self.btn.set_css_classes(["suggested-action"])
 
     def _connect(self, spec):
+        if spec.get("type") == "serial":
+            spec = dict(spec, usb_id=usb_identity(spec["device"]))
+        self.last_spec = spec
         self.cancel = threading.Event()
         cancel = self.cancel
         self._set_busy(True, "Connecting…")
@@ -352,6 +378,19 @@ class ConnectBar(Gtk.Box):
             got, total = len(v.params.values), v.params.count
             idle(dlg.update_step, s_par, f"Parameters {got} / {total}" + ("" if ok else " (some missing)"),
                  "ok" if ok else "warn")
+            # descriptions that match this exact firmware (downloaded once, then cached)
+            from ..core.params import ParamDocs
+            if not v.state.flight_sw_version:
+                v.request_message(148)
+                v.wait_for("AUTOPILOT_VERSION", timeout=2.0)
+            ver = ParamDocs.version_of(v.state.flight_sw_version)
+            if ver:
+                h = [None]
+                idle(lambda: h.__setitem__(0, dlg.step(f"Parameter descriptions for firmware {ver}…")))
+                note = ParamDocs.use_firmware(st.vclass, v.state.flight_sw_version)
+                idle(lambda: h[0] and dlg.update_step(
+                    h[0], note or "Parameter descriptions: bundled",
+                    "ok" if note and note.startswith("Descriptions matched") else "warn"))
             idle(self.shared.hub.emit, "params-loaded", ok)
             from ..core.mission import FENCE, MISSION, RALLY
             out = {}
@@ -400,5 +439,45 @@ class ConnectBar(Gtk.Box):
         self._update_fields()
         self.btn.set_tooltip_text(None)
         self.refresh_ports()
+        spec = getattr(self, "last_spec", None)
+        if err and spec and spec.get("type") == "serial" and spec.get("usb_id"):
+            # the USB device dropped off (unplugged, or a power dip on the board):
+            # wait for the same device to come back, under whatever name it gets
+            self._start_reconnect(spec, err)
+            return
         if err:
             alert(self.get_root(), "Connection lost", err)
+
+    # ---------------------------------------------------------------- auto-reconnect
+    def _start_reconnect(self, spec, err, seconds=120):
+        self._reconnect_until = time.monotonic() + seconds
+        self._reconnect_spec = spec
+        self._set_busy(False, "Reconnecting…")
+        self.btn.set_label("Stop")
+        self.btn.set_css_classes([])
+        self.reconnecting = True
+        toast(f"Connection lost ({err}). Reconnecting automatically when the device is back…", 6)
+        GLib.timeout_add(1500, self._reconnect_tick)
+
+    def _reconnect_tick(self):
+        if not getattr(self, "reconnecting", False):
+            return False
+        spec = self._reconnect_spec
+        dev = find_usb_device(spec["usb_id"])
+        if dev:
+            self.reconnecting = False
+            new = dict(spec, device=dev)
+            cfg = dict(self.shared.settings.get("connection") or {})
+            cfg.update(type="serial", device=dev, baud=spec.get("baud"))
+            self.shared.settings.set("connection", cfg)
+            self.refresh_ports()
+            GLib.timeout_add(1200, lambda: self._connect(new) and False)   # let the device settle
+            return False
+        if time.monotonic() > self._reconnect_until:
+            self.reconnecting = False
+            self._set_busy(False)
+            alert(self.get_root(), "Connection lost",
+                  "The device didn't come back within two minutes. Check the cable and the board's power, "
+                  "then press Connect.")
+            return False
+        return True

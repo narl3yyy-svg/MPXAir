@@ -20,7 +20,10 @@ lead: MPXAir can read the GPS of different ground stations that share the teleme
 
 <h2>The settings for each type</h2>
 <p>Each type has its own settings, saved separately, so switching types never loses them. Change a value and press <b>Save</b>.
-<b>Reset</b> puts the defaults back. <b>Test now</b> sends the poll command once, and the reply appears under <i>Last message from the ground station</i>, which is the quickest way to check a new board.</p>
+<b>Reset</b> puts the defaults back. <b>Test now</b> sends the poll command once, and the reply appears under <i>Raw message</i>, which is the quickest way to check a new board.</p>
+<p>Above the settings, MPXAir shows what it understood from the board: the <b>board</b> (name, firmware, uptime), the <b>GPS</b> (fix, satellites, HDOP, altitude)
+and, for the RFD900 + ESP32 board, its <b>radio links</b> (RFD900 link quality, ELRS RSSI, LQ and SNR, RC rate) and <b>board health</b> (ESP32 temperature, bytes sent and received).
+Replies damaged by telemetry bytes mixed into the line are repaired where possible.</p>
 <table>
   <tr><th>Setting</th><th>Meaning</th></tr>
   <tr><td>Poll command</td><td>Text sent to ask for the status, e.g. <code>#GCS status</code>. Leave empty if the board sends its position by itself.</td></tr>

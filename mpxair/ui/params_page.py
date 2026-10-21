@@ -59,6 +59,18 @@ def group_title(key):
     return f"{friendly} ({key})" if friendly else key
 
 
+def describe_row(r):
+    """List text: the parameter's name in words, then the start of what it does."""
+    d = r.doc
+    if not d:
+        return "(no description)"
+    name = d.get("DisplayName", "")
+    desc = " ".join((d.get("Description") or "").split())
+    if desc and desc.lower() != name.lower():
+        return f"{name} — {desc}" if name else desc
+    return name
+
+
 class ParamRow(GObject.Object):
     __gtype_name__ = "MPXParamRow"
 
@@ -129,10 +141,10 @@ class ParamsPage(Gtk.Box):
         self.sel = Gtk.SingleSelection(model=self.sorted, autoselect=False, can_unselect=True)
         self.sel.connect("notify::selected-item", self._on_select)
         cv = Gtk.ColumnView(model=self.sel, show_row_separators=True, css_classes=["data-table"])
-        for title, fn, expand, width in (("Name", lambda r: r.name, False, 210),
-                                         ("Value", lambda r: r.display_value(), False, 210),
-                                         ("Units", lambda r: r.doc.get("Units", ""), False, 90),
-                                         ("Description", lambda r: r.doc.get("DisplayName", ""), True, 200)):
+        for title, fn, expand, width in (("Name", lambda r: r.name, False, 190),
+                                         ("Value", lambda r: r.display_value(), False, 170),
+                                         ("Units", lambda r: r.doc.get("Units", ""), False, 60),
+                                         ("Description", describe_row, True, 260)):
             f = Gtk.SignalListItemFactory()
             f.connect("setup", self._cell_setup)
             f.connect("bind", self._cell_bind, fn, title)
@@ -325,14 +337,38 @@ class ParamsPage(Gtk.Box):
                                      "press “Write changes”.", ["dim-label", "caption"], wrap=True))
             return
         d = r.doc
-        self.editor.append(label(r.name, ["title-2", "mono"], selectable=True))
+        self.editor.append(label(r.name, ["title-2", "mono"], selectable=True, wrap=True))
         if d.get("DisplayName"):
-            self.editor.append(label(d["DisplayName"], ["heading"], wrap=True))
+            self.editor.append(label(d["DisplayName"], ["title-4"], wrap=True))
         if d.get("Description"):
-            self.editor.append(label(d["Description"], wrap=True))
-        if not d:
-            self.editor.append(label("No description is available for this parameter in the bundled "
-                                     "documentation.", ["dim-label"], wrap=True))
+            self.editor.append(label("WHAT IT DOES", ["panel-header"]))
+            self.editor.append(label(d["Description"], wrap=True, selectable=True))
+        else:
+            self.editor.append(label("WHAT IT DOES", ["panel-header"]))
+            self.editor.append(label("MPXAir has no description for this parameter yet. Descriptions that match "
+                                     "the aircraft's firmware are downloaded when you connect while online.",
+                                     ["dim-label"], wrap=True))
+            self.editor.append(button("Download the latest descriptions", self._update_docs,
+                                      halign=Gtk.Align.START))
+        cur = r.pending if r.pending is not None else r.value
+        if d.get("values") or d.get("bits"):
+            self.editor.append(label("OPTIONS" if d.get("values") else "BITS (add them up)", ["panel-header"]))
+            grid = Gtk.Grid(column_spacing=12, row_spacing=2)
+            if d.get("values"):
+                for i, (k, meaning) in enumerate(d["values"][:40]):
+                    now = abs(k - float(cur)) < 1e-6
+                    css = ["numeric", "accent"] if now else ["numeric", "dim-label"]
+                    grid.attach(label(format_value(int(k) if float(k).is_integer() else k), css, xalign=1.0), 0, i, 1, 1)
+                    grid.attach(label(meaning + ("   ← current" if now else ""), ["accent"] if now else [],
+                                      wrap=True), 1, i, 1, 1)
+            else:
+                ival = int(cur)
+                for i, (bit, meaning) in enumerate(d["bits"][:40]):
+                    on = bool(ival & (1 << bit))
+                    grid.attach(label(f"{1 << bit}", ["numeric", "accent" if on else "dim-label"], xalign=1.0), 0, i, 1, 1)
+                    grid.attach(label(meaning + ("   ✓ on" if on else ""), ["accent"] if on else [], wrap=True),
+                                1, i, 1, 1)
+            self.editor.append(grid)
         facts = []
         if d.get("Units"):
             facts.append(f"Units: {d['Units']}")
@@ -346,6 +382,7 @@ class ParamsPage(Gtk.Box):
             facts.append(f"Level: {d['User']}")
         if facts:
             self.editor.append(label(" · ".join(facts), ["dim-label", "caption"], wrap=True))
+        self.editor.append(label("CHANGE IT", ["panel-header"]))
 
         cur = r.pending if r.pending is not None else r.value
         readonly = d.get("ReadOnly", "").lower() == "true"
@@ -400,6 +437,18 @@ class ParamsPage(Gtk.Box):
         while child:
             child.set_sensitive(not readonly)
             child = child.get_next_sibling()
+
+    def _update_docs(self):
+        from ..core.params import ParamDocs
+
+        def work():
+            ParamDocs.update_online()
+            st = self.v.state
+            if st.flight_sw_version:
+                ParamDocs.use_firmware(st.vclass, st.flight_sw_version)
+            return True
+        background(work, lambda _r: (self.reload(), toast("Parameter descriptions updated")),
+                   lambda e: toast(f"Couldn't download descriptions: {e}"))
 
     def _stage(self, r, val):
         if val is not None and abs(float(val) - float(r.value)) < 1e-7:

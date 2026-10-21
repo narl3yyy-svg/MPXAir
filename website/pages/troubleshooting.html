@@ -22,6 +22,16 @@ lead: Fixes for the most common problems.
 </ul>
 <pre><code>journalctl -k -f      # watch while plugging the device in</code></pre>
 
+<h2>The ground station board keeps restarting</h2>
+<p>If <code>journalctl -k</code> shows <code>USB disconnect</code> for the board's hub every so often, and the board comes back a few seconds later
+(often as <code>ttyACM1</code>), the board is losing power for a moment (a brown-out). A radio transmitting at high power, the ESP32 and the GPS together can draw more
+than a laptop USB port supplies. Each brown-out also cold-starts a GPS without a backup battery, so it loses its satellites for a few minutes.</p>
+<ul>
+  <li>Power the board from a powered USB hub or its own supply.</li>
+  <li>Use a short, good-quality USB cable.</li>
+  <li>MPXAir reconnects on its own when the board comes back, and keeps the last known ground position on the map meanwhile.</li>
+</ul>
+
 <h2>No heartbeat from the aircraft</h2>
 <ul>
   <li>Check the baud rate: 57600 for most telemetry radios, 115200 for USB.</li>
@@ -31,7 +41,7 @@ lead: Fixes for the most common problems.
 
 <h2>The ground station GPS doesn't show</h2>
 <ul>
-  <li>On the Ground tab, check <b>Last message from the ground station</b>. If it's empty, the board isn't sending (try <b>Test now</b>, and check the prefix and poll command).</li>
+  <li>On the Ground tab, open <b>Raw message</b>. If it's empty, the board isn't sending (try <b>Test now</b>, and check the prefix and poll command).</li>
   <li>A GPS without a backup battery needs a few minutes for its first fix.</li>
   <li>The GROUND marker can be hidden with the ground-station button on the Fly map.</li>
 </ul>

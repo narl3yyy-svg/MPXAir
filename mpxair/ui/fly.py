@@ -223,11 +223,12 @@ class FlyPage(Gtk.Box):
         overlay.set_child(self.map)
         overlay.add_overlay(self._map_chips())
         overlay.add_overlay(self._map_buttons())
-        self.attrib = label("", ["map-attrib"], halign=Gtk.Align.END, valign=Gtk.Align.END)
+        self.attrib = label("", ["map-attrib", "map-credit"], halign=Gtk.Align.END, valign=Gtk.Align.END)
         overlay.add_overlay(self.attrib)
         self.coord = label("", ["map-attrib", "mono"], halign=Gtk.Align.START, valign=Gtk.Align.END)
         overlay.add_overlay(self.coord)
         overlay.add_overlay(self._gps_card())
+        overlay.add_overlay(self._ground_card())
         overlay.add_overlay(self._replay_bar())
         self.map.on_hover = lambda la, lo: self.coord.set_text(f" {la:.6f}, {lo:.6f} ")
         paned.set_end_child(overlay)
@@ -637,10 +638,8 @@ class FlyPage(Gtk.Box):
         self.chip_mode = label("—", ["chip", "info"])
         self.chip_batt = label("BAT", ["chip"])
         self.chip_link = label("LINK", ["chip"])
-        self.chip_gnd = label("GND", ["chip"], tooltip_text="Ground station GPS")
         self.chip_alt = label("", ["chip", "numeric"])
-        for c in (self.chip_armed, self.chip_mode, self.chip_alt, self.chip_batt, self.chip_link,
-                  self.chip_gnd):
+        for c in (self.chip_armed, self.chip_mode, self.chip_alt, self.chip_batt, self.chip_link):
             box.append(c)
         return box
 
@@ -753,9 +752,12 @@ class FlyPage(Gtk.Box):
         self.gps_detail_lbl.set_text(detail)
 
     def _update_attrib(self):
+        # map licences require a visible credit: keep it short and faint, full text on hover
         p = self.map.provider
-        a = p.attribution
-        self.attrib.set_text(f" {a} ")
+        short = "© Esri" if "Esri" in p.attribution else (
+            "© OpenTopoMap · OSM" if "OpenTopoMap" in p.attribution else "© OpenStreetMap")
+        self.attrib.set_text(short)
+        self.attrib.set_tooltip_text(p.attribution)
 
     def _fit_mission(self):
         pts = [(it.x, it.y) for it in self.shared.mission if it.has_location]
@@ -816,6 +818,21 @@ class FlyPage(Gtk.Box):
         elif pts:
             self.map.set_center(*pts[0])
 
+    def _ground_card(self):
+        """Ground station GPS, bottom-right of the map (the aircraft's GPS is bottom-left)."""
+        card = Gtk.Box(spacing=8, halign=Gtk.Align.END, valign=Gtk.Align.END, margin_end=10,
+                       margin_bottom=26, css_classes=["map-card"], visible=False)
+        self.gnd_icon = Gtk.Image(icon_name="network-wireless-symbolic", pixel_size=18)
+        card.append(self.gnd_icon)
+        col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.gnd_title = label("Ground GPS", ["heading"])
+        self.gnd_detail = label("", ["caption", "numeric"])
+        col.append(self.gnd_title)
+        col.append(self.gnd_detail)
+        card.append(col)
+        self.gnd_card = card
+        return card
+
     def _update_ground_chip(self):
         g = self.shared.ground
         st = self.v.state
@@ -824,20 +841,34 @@ class FlyPage(Gtk.Box):
             az, el, d = tracker_angles(g.lat, g.lon, g.alt or 0, st.lat, st.lon, st.alt_msl)
             st.dist_ground, st.bearing_ground, st.elev_ground = d, az, el
         if g.source == "none" or not self.show_ground:
-            self.chip_gnd.set_visible(False)
+            self.gnd_card.set_visible(False)
             return
-        self.chip_gnd.set_visible(True)
-        if g.valid():
-            txt = "GND GPS" + (f" · {g.sats}" if g.sats else "")
-            if st.has_position:
-                txt += f" · {fmt_dist(st.dist_ground)}"
-            self.chip_gnd.set_text(txt)
-            self.chip_gnd.set_css_classes(["chip", "info"])
+        self.gnd_card.set_visible(True)
+        self.gnd_card.set_tooltip_text(g.status)
+        if g.source == "manual":
+            title, lvl = "Ground: fixed position", "success"
+            detail = fmt_dist(st.dist_ground) + " to aircraft" if st.has_position else "Not from a GPS"
+        elif g.valid():
+            title, lvl = "Ground GPS: fix", "success"
+            bits = [f"{g.sats} satellites"] if g.sats else []
+            if g.hdop:
+                bits.append(f"HDOP {g.hdop:.1f}")
+            if st.has_position and st.connected:
+                bits.append(f"{fmt_dist(st.dist_ground)} to aircraft")
+            detail = " · ".join(bits) or g.status
         else:
             waiting = g.source == "board" and not self.v.is_open
-            self.chip_gnd.set_text("GND GPS · not connected" if waiting else "GND GPS · no fix")
-            self.chip_gnd.set_css_classes(["chip", "warn"])
-        self.chip_gnd.set_tooltip_text(g.status)
+            lvl = "warning" if not waiting else "dim-label"
+            title = "Ground GPS: not connected" if waiting else "Ground GPS: no fix"
+            last = g.last_known()
+            detail = (f"{g.sats} satellites seen" if g.sats else "Searching for satellites")
+            if last and last[2] > 0:
+                age = last[2]
+                detail += f" · last fix {age:.0f} s ago" if age < 90 else f" · last fix {age / 60:.0f} min ago"
+        self.gnd_title.set_text(title)
+        self.gnd_title.set_css_classes(["heading", lvl])
+        self.gnd_icon.set_css_classes([lvl])
+        self.gnd_detail.set_text(detail)
 
     def _track_distance(self):
         """Distance flown while armed (for the 'Distance flown' tile)."""

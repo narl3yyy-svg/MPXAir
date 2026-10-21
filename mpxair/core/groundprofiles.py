@@ -7,6 +7,7 @@ settings["ground_profiles"][profile_id] and override the defaults below.
 """
 import copy
 import json
+import re
 
 # kind:
 #   text_json  poll with a text command; replies are "<prefix>{json}" lines
@@ -191,19 +192,48 @@ def fix_ok(v):
     return n >= 1
 
 
+def loads_damaged(data, p):
+    """json.loads that survives telemetry bytes mixed into a reply line: first the whole line,
+    then with non-printable bytes removed, then just the objects that hold the fields we need."""
+    for cand in (data, "".join(ch for ch in data if 32 <= ord(ch) < 127)):
+        try:
+            return json.loads(cand)
+        except ValueError:
+            pass
+    clean = "".join(ch for ch in data if 32 <= ord(ch) < 127)
+    obj = {}
+    for key in ("lat", "lon", "alt", "sats", "fix", "hdop", "name_field", "fw_field", "follow_state",
+                "require_field"):
+        path = str(p.get(key) or "")
+        if not path:
+            continue
+        head = path.split(".")[0]
+        if head in obj:
+            continue
+        if "." in path:
+            # rescue the small object that holds this field, e.g. "gps":{...}
+            m = re.search(r'"%s"\s*:\s*(\{[^{}]*\})' % re.escape(head), clean)
+            if m:
+                try:
+                    obj[head] = json.loads(m.group(1))
+                except ValueError:
+                    pass
+        else:
+            m = re.search(r'"%s"\s*:\s*("(?:[^"\\]|\\.)*"|-?[\d.eE+-]+|true|false|null)' % re.escape(head), clean)
+            if m:
+                try:
+                    obj[head] = json.loads(m.group(1))
+                except ValueError:
+                    pass
+    return obj or None
+
+
 def parse_reply(p, line):
     """Turn one reply line (str, prefix included) into a dict with lat/lon/alt/sats/hdop/fix,
     plus 'raw' (the decoded object) — or None if it doesn't hold a position report."""
     data = line[len(p["prefix"]):].strip()
     if p["kind"] == "text_json":
-        try:
-            obj = json.loads(data)
-        except ValueError:
-            obj = None
-            try:
-                obj = json.loads("".join(ch for ch in data if 32 <= ord(ch) < 127))
-            except ValueError:
-                return None
+        obj = loads_damaged(data, p)
         if not isinstance(obj, dict):
             return None
         if p.get("require_field") and json_get(obj, p["require_field"]) is None:

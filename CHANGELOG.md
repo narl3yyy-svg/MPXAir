@@ -2,6 +2,24 @@
 
 All notable changes to MPXAir are listed here.
 
+## 1.2.1 — 2026-10-21
+
+### Fixed
+- A stray diagonal line on the HUD next to the pitch ladder (a drawing path wasn't cleared after the ladder numbers).
+- Dropdowns showed no value while their first option was selected (Ground station type, parameter values).
+- The window could open wider than the screen, cutting off the parameter description panel.
+
+### Added / changed
+- Parameter descriptions that match the aircraft's exact firmware version, downloaded on connect and cached. A
+  description panel with *What it does*, the options and their meanings, range and units, plus descriptions in the list.
+- Ground GPS card at the bottom-right of the Fly map. The GROUND marker keeps its last known position (greyed) when
+  the ground GPS loses its fix or the board restarts.
+- Ground station panel shows the board, GPS, radio links and board health clearly. The raw message is folded away.
+- Board replies damaged by telemetry bytes are repaired instead of dropped.
+- Automatic reconnect when a USB device drops off and comes back, even under a new device name.
+- HUD pitch ladder covers ±90°, with dashed rungs below the horizon.
+- GPS "DGPS" is shown as "3D Fix + DGPS"; the map credit is smaller.
+
 ## 1.2.0 — 2026-10-21
 
 ### Added

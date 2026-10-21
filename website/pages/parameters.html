@@ -25,4 +25,12 @@ lead: Every setting on the aircraft, grouped, searchable and explained — and c
   <li><b>Load…</b> reads a Mission Planner, MAVProxy or QGroundControl file. It compares it with the aircraft and <b>stages only the differences</b> for you to review. Calibration and counter values are never overwritten.</li>
 </ul>
 <h2>Descriptions</h2>
-<p>MPXAir ships descriptions for every ArduPilot parameter. Newer firmware adds parameters. <b>Preferences → Telemetry → Update</b> downloads ArduPilot's latest descriptions.</p>
+<p>Select a parameter to see, on the right:</p>
+<ul>
+  <li><b>What it does</b>: the full description;</li>
+  <li><b>Options</b>: what each value means, with the current one marked (or the bits, for bitmasks);</li>
+  <li>its range, units and step, and whether it needs a reboot.</li>
+</ul>
+<p>When you connect while online, MPXAir downloads the descriptions that <b>exactly match the aircraft's firmware version</b>
+(for example ArduCopter 4.7.1), as Mission Planner does. They are cached, so they also work offline later. Without internet it uses the bundled descriptions.
+<b>Preferences → Telemetry → Update</b> downloads ArduPilot's latest set by hand.</p>

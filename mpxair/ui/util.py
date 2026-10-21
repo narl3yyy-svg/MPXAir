@@ -172,7 +172,7 @@ def fmt_time(seconds):
     return f"{h}:{mnt:02d}:{s:02d}" if h else f"{mnt:02d}:{s:02d}"
 
 
-GPS_FIX = {0: "No GPS", 1: "No Fix", 2: "2D Fix", 3: "3D Fix", 4: "DGPS", 5: "RTK Float",
+GPS_FIX = {0: "No GPS", 1: "No Fix", 2: "2D Fix", 3: "3D Fix", 4: "3D Fix + DGPS", 5: "RTK Float",
            6: "RTK Fixed", 7: "Static", 8: "PPP"}
 
 
@@ -235,19 +235,27 @@ class CairoWidget(Gtk.Widget):
 # ---------------------------------------------------------------- readable choices
 def readable(row):
     """Make an existing Adw.ComboRow show its full value (under the title) and wrap
-    long names in its list."""
-    row.set_use_subtitle(True)
-    # the shown value and the search box both read the option's text through this
+    long names in its list. The value text is set here rather than with
+    Adw's use-subtitle, which leaves it blank while the first option is selected."""
+    row.set_use_subtitle(False)
     row.set_expression(Gtk.PropertyExpression.new(Gtk.StringObject, None, "string"))
     lf = Gtk.SignalListItemFactory()
     lf.connect("setup", lambda f, it: it.set_child(Gtk.Label(xalign=0, wrap=True, max_width_chars=48,
                                                              margin_top=2, margin_bottom=2)))
     lf.connect("bind", lambda f, it: it.get_child().set_text(it.get_item().get_string()))
     row.set_list_factory(lf)
-    # refresh the shown value now that the expression is set (selection 0 wouldn't notify)
-    sel = row.get_selected()
-    row.set_selected(Gtk.INVALID_LIST_POSITION)
-    row.set_selected(sel)
+    # the chosen value is shown in full under the title, so the row's own (cut-off) copy
+    # on the right is left empty
+    ef = Gtk.SignalListItemFactory()
+    ef.connect("setup", lambda f, it: it.set_child(Gtk.Label()))
+    row.set_factory(ef)
+
+    def show(*_):
+        item = row.get_selected_item()
+        row.set_subtitle(GLib.markup_escape_text(item.get_string()) if item is not None else "")
+    row.connect("notify::selected", show)
+    row.connect("notify::model", show)
+    show()
     return row
 
 

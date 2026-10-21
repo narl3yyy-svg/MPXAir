@@ -143,17 +143,29 @@ class GroundPage(Gtk.Box):
         self.about_row.set_subtitle_lines(6)
         grp.add(self.about_row)
         self.board_row = Adw.ActionRow(title="Ground station", subtitle="Not seen yet", use_markup=False)
+        self.board_row.add_prefix(Gtk.Image(icon_name="computer-symbolic"))
         grp.add(self.board_row)
+        self.gps_row = Adw.ActionRow(title="GPS", subtitle="—", use_markup=False)
+        self.gps_row.add_prefix(Gtk.Image(icon_name="find-location-symbolic"))
+        grp.add(self.gps_row)
+        self.link_row = Adw.ActionRow(title="Radio links", subtitle="—", use_markup=False)
+        self.link_row.set_subtitle_lines(3)
+        self.link_row.add_prefix(Gtk.Image(icon_name="network-wireless-symbolic"))
+        grp.add(self.link_row)
+        self.health_row = Adw.ActionRow(title="Board health", subtitle="—", use_markup=False)
+        self.health_row.add_prefix(Gtk.Image(icon_name="dialog-information-symbolic"))
+        grp.add(self.health_row)
         self.board_follow = Adw.SwitchRow(
             title="Ground station sends its position to the aircraft",
             subtitle="For ArduPilot's Follow mode (set FOLL_ENABLE=1 and FOLL_SYSID=255 on the aircraft).")
         self.board_follow.connect("notify::active", self._board_follow_toggled)
         self._board_follow_sync = False
         grp.add(self.board_follow)
-        self.raw_row = Adw.ActionRow(title="Last message from the ground station", subtitle="—", use_markup=False)
-        self.raw_row.set_subtitle_lines(4)
-        self.raw_row.add_css_class("property")
-        grp.add(self.raw_row)
+        self.raw_exp = Adw.ExpanderRow(title="Raw message", subtitle="The last line received, for troubleshooting")
+        self.raw_lbl = Gtk.Label(xalign=0, wrap=True, wrap_mode=2, selectable=True, margin_start=12,
+                                 margin_end=12, margin_top=8, margin_bottom=8, css_classes=["mono", "caption"])
+        self.raw_exp.add_row(self.raw_lbl)
+        grp.add(self.raw_exp)
         self.board_grp = grp
         self.settings_grp = Adw.PreferencesGroup(title="Settings for this type")
         sbtns = Gtk.Box(spacing=8, valign=Gtk.Align.CENTER)
@@ -196,6 +208,8 @@ class GroundPage(Gtk.Box):
         has_follow = bool(p.get("follow_on"))
         self.board_follow.set_visible(has_follow)
         self.board_row.set_visible(p["kind"] == "text_json")
+        self.link_row.set_visible(pid == "rfd_esp32")
+        self.health_row.set_visible(pid == "rfd_esp32")
         for row in self.profile_rows.values():
             self.settings_grp.remove(row[0])
         self.profile_rows = {}
@@ -501,6 +515,56 @@ class GroundPage(Gtk.Box):
                 tr.stop()
 
     # ----------------------------------------------------------------- tick
+    def _update_board_rows(self, g):
+        if g.last_raw:
+            age = time.time() - g.last_raw_time
+            self.raw_exp.set_subtitle(f"Received {age:.0f} s ago")
+            self.raw_lbl.set_text(g.last_raw)
+        elif g.source == "board":
+            self.raw_exp.set_subtitle("Nothing received yet")
+            self.raw_lbl.set_text("")
+        b = getattr(g, "board", None) or {}
+        # GPS (any type)
+        if g.source == "board":
+            if g.valid():
+                bits = ["Fix", f"{g.sats} satellites"]
+                if g.hdop:
+                    bits.append(f"HDOP {g.hdop:.1f}")
+                if g.alt:
+                    bits.append(f"{g.alt:.0f} m above sea level")
+                self.gps_row.set_subtitle(" · ".join(bits))
+            else:
+                last = g.last_known()
+                txt = f"No fix · {g.sats} satellites seen" if g.sats else "No fix yet"
+                if last and last[2] > 0:
+                    txt += f" · last fix {last[2]:.0f} s ago" if last[2] < 90 else f" · last fix {last[2] / 60:.0f} min ago"
+                self.gps_row.set_subtitle(txt)
+        if not b or "fw" not in b:
+            return
+        up = int(b.get("up") or 0)
+        uptime = f"{up // 3600} h {up // 60 % 60} min" if up >= 3600 else f"{up // 60} min {up % 60} s"
+        self.board_row.set_title(b.get("name") or "Ground station")
+        self.board_row.set_subtitle(f"Firmware {b.get('fw', '?')} · running for {uptime}")
+        lines = []
+        rfd_lq = b.get("rfdLq")
+        if rfd_lq is not None:
+            lines.append(f"RFD900 (to aircraft): link quality {rfd_lq} %")
+        if b.get("link") is not None:
+            elrs = f"ELRS (handset): {b.get('link')}"
+            if b.get("link") == "connected":
+                elrs += f" · RSSI {b.get('rssi')} dBm · LQ {b.get('lq')} % · SNR {b.get('snr')} dB"
+            lines.append(elrs)
+        if b.get("rcHz") is not None:
+            lines.append(f"RC to aircraft: {b.get('rcHz')} Hz")
+        self.link_row.set_subtitle("\n".join(lines) or "—")
+        health = []
+        if b.get("espTemp") is not None:
+            health.append(f"ESP32 {b.get('espTemp'):.1f} °C")
+        cnt = b.get("cnt") or {}
+        if cnt.get("usbToRfd") is not None:
+            health.append(f"{cnt.get('usbToRfd'):,} bytes to aircraft · {cnt.get('rfdToUsb'):,} bytes from it")
+        self.health_row.set_subtitle(" · ".join(health) or "—")
+
     def _tick(self):
         if not self.get_mapped():
             return True
@@ -509,21 +573,9 @@ class GroundPage(Gtk.Box):
             self.pos_status.set_subtitle(f"{g.lat:.6f}, {g.lon:.6f} · {g.alt:.0f} m · {g.status}")
         else:
             self.pos_status.set_subtitle(g.status)
-        if g.last_raw:
-            age = time.time() - g.last_raw_time
-            self.raw_row.set_subtitle(f"{g.last_raw}\n({age:.0f} s ago)")
-        elif g.source == "board":
-            self.raw_row.set_subtitle("Nothing received yet")
+        self._update_board_rows(g)
         b = getattr(g, "board", None) or {}
         if b and "fw" in b:
-            gp = b.get("gps") or {}
-            cnt = b.get("cnt") or {}
-            bits = [f"{b.get('name') or 'Ground station'} · firmware {b.get('fw', '?')}"]
-            bits.append(f"GPS {'fix' if gp.get('fix') else 'no fix'}, {gp.get('sats', 0)} satellites"
-                        + (f", HDOP {gp.get('hdop'):.1f}" if gp.get('fix') and gp.get('hdop') is not None else ""))
-            if b.get("follow"):
-                bits.append(f"sending position to aircraft ({cnt.get('follow', 0)} sent)")
-            self.board_row.set_subtitle(" · ".join(bits))
             if bool(b.get("follow")) != self.board_follow.get_active():
                 self._board_follow_sync = True
                 self.board_follow.set_active(bool(b.get("follow")))

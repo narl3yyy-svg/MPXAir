@@ -5,6 +5,17 @@ order: 3
 nav: What's new
 lead: Changes in each version of MPXAir.
 -->
+<h2>1.2.1</h2>
+<ul>
+  <li><b>Fixed:</b> a stray diagonal line on the HUD next to the pitch ladder; the ladder now covers ±90° with dashed rungs below the horizon.</li>
+  <li><b>Fixed:</b> dropdowns showing no value when their first option was selected (e.g. Ground station type, parameter values).</li>
+  <li><b>Fixed:</b> the window opening wider than the screen, which hid the right-hand panels.</li>
+  <li>Parameter descriptions matched to the aircraft's exact firmware version, a clearer description panel (<i>What it does</i>, options), and descriptions in the list.</li>
+  <li>Ground GPS card at the bottom-right of the Fly map. The GROUND marker stays at its last known position when the fix is lost.</li>
+  <li>Clearer ground station panel (board, GPS, radio links, health), more robust reading of board replies.</li>
+  <li>Automatic reconnect when a USB device drops off and comes back.</li>
+  <li>"3D Fix + DGPS" instead of "DGPS", and a smaller map credit.</li>
+</ul>
 <h2>1.2.0</h2>
 <ul>
   <li><b>Ground station types</b>: RFD900 + ESP32, GPS in the telemetry (NMEA/MAVLink), MAVLink GPS from the ground station, and custom boards with JSON or comma-separated replies. Each type has its own editable settings, with <i>Test now</i> and the last message received.</li>

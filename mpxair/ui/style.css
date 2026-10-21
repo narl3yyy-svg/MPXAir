@@ -56,6 +56,13 @@
   padding: 1px 6px;
   border-radius: 6px 0 0 0;
 }
+.map-credit {
+  font-size: 0.62em;
+  background-color: transparent;
+  color: alpha(white, 0.55);
+  text-shadow: 0 0 2px black;
+  padding: 0 4px 1px 4px;
+}
 
 .side-panel { background-color: @sidebar_bg_color; }
 .panel-header {

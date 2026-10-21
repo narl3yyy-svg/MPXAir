@@ -76,6 +76,14 @@ class MainWindow(Adw.ApplicationWindow):
         self.shared = shared
         shared.window = self
         w, h = shared.settings.get("window") or (1440, 900)
+        # never open bigger than the screen (a too-wide window hides the right-hand panels)
+        try:
+            mons = Gdk.Display.get_default().get_monitors()
+            if mons.get_n_items():
+                geo = mons.get_item(0).get_geometry()
+                w, h = min(w, geo.width), min(h, geo.height - 40)
+        except Exception:
+            pass
         self.set_default_size(w, h)
         if shared.settings.get("maximized", True):
             self.maximize()
