@@ -112,6 +112,7 @@ class MainWindow(Adw.ApplicationWindow):
         menu.append("Preferences", "app.preferences")
         menu.append("Offline Maps…", "app.offline-maps")
         menu.append("Open Telemetry Log (.tlog)…", "app.open-tlog")
+        menu.append("Manual (online)", "app.manual")
         menu.append("Keyboard Shortcuts", "app.shortcuts")
         menu.append("About MPXAir", "app.about")
         menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu,
@@ -218,6 +219,7 @@ class MPXAirApp(Adw.Application):
                                 ("offline-maps", self._offline, None),
                                 ("open-tlog", self._open_tlog, None),
                                 ("shortcuts", self._shortcuts, "<Ctrl>question"),
+                                ("manual", lambda *_: open_docs(self.win), "F1"),
                                 ("about", self._about, None),
                                 ("quit", lambda *_: self.win.close(), "<Ctrl>q")):
             a = Gio.SimpleAction.new(name, None)
@@ -257,7 +259,8 @@ class MPXAirApp(Adw.Application):
         self.win.pages["logs"].open_tlog()
 
     def _shortcuts(self, *_):
-        text = ("Alt+1 … Alt+6  switch screens\n"
+        text = ("F1  open the online manual\n"
+                "Alt+1 … Alt+6  switch screens\n"
                 "Ctrl+,  preferences\n"
                 "Ctrl+Q  quit\n\n"
                 "Map: scroll to zoom, drag to pan, right-click for actions.\n"
@@ -281,6 +284,11 @@ class MPXAirApp(Adw.Application):
                                 "OpenStreetMap © OpenStreetMap contributors (ODbL). "
                                 "OpenTopoMap © OpenTopoMap (CC-BY-SA).", Gtk.License.CUSTOM, None)
         about.present(self.win)
+
+
+def open_docs(parent, page=""):
+    """Open the MPXAir manual (GitHub Pages) in the web browser."""
+    Gtk.UriLauncher.new(config.DOCS_URL + page).launch(parent, None, None)
 
 
 def main(argv=None):

@@ -1,0 +1,40 @@
+<!--
+title: RFD900 + ESP32 ground station
+section: Hardware and integration
+order: 1
+nav: RFD900 + ESP32 board
+lead: Using MPXAir with the RFD900 / ESP32-S3 router board and its on-board GPS.
+-->
+<h2>About the board</h2>
+<p>The board combines:</p>
+<ul>
+  <li>an <b>RFD900</b> telemetry radio, linked to the aircraft's RFD900;</li>
+  <li>an <b>ESP32-S3</b> that routes telemetry to USB and RC from an ELRS receiver to the aircraft;</li>
+  <li>a <b>GPS module</b> wired to the ESP32 (UART 115200 baud on GPIO7/6, PPS on GPIO8).</li>
+</ul>
+<p>On the computer it appears as <code>ttyACM0 · Espressif</code> (USB ID <code>303a</code>). Its own settings are changed with the board's
+<a href="https://narl3yyy-svg.github.io/gcs-settings/">GCS Settings page</a>.</p>
+
+<h2>Connecting</h2>
+<ol class="steps">
+  <li>Plug the board in and pick <code>ACM0 · Espressif</code> at the top right. The ESP32's USB ignores the baud rate, so any value works.</li>
+  <li>Press <b>Connect</b>. MPXAir releases DTR and RTS so the ESP32 isn't reset, and asks the board for its status.</li>
+  <li>If the aircraft is on, it connects as usual. If not, the window says <i>Ground station connected — waiting for the aircraft</i>, and the ground GPS works straight away.</li>
+  <li>The first time, the ground position switches to this board's GPS automatically.</li>
+</ol>
+<div class="callout warn"><b>One program at a time</b><p>The board's GCS Settings page and MPXAir can't use the USB port at the same time. Disconnect one before connecting the other.</p></div>
+
+<h2>What MPXAir reads</h2>
+<p>Once a second MPXAir sends <code>#GCS status</code>. The board answers with a line starting <code>#GCS {</code>, mixed into the telemetry. MPXAir uses:</p>
+<table>
+  <tr><th>Field</th><th>Shown as</th></tr>
+  <tr><td><code>gps.fix</code>, <code>gps.sats</code>, <code>gps.hdop</code></td><td>Fix, satellites, HDOP</td></tr>
+  <tr><td><code>gps.lat</code>, <code>gps.lon</code> (degrees × 10⁷), <code>gps.altMm</code></td><td>Ground position and altitude</td></tr>
+  <tr><td><code>name</code>, <code>fw</code></td><td>The board's name and firmware on the Ground tab</td></tr>
+  <tr><td><code>follow</code></td><td>Whether the board is broadcasting its position to the aircraft</td></tr>
+</table>
+<h2>Follow mode</h2>
+<p>Turn on <b>Ground station sends its position to the aircraft</b> (Ground tab). This sends <code>#GCS follow 1</code>, and the board then broadcasts
+<code>GLOBAL_POSITION_INT</code> as system 255 twice a second. For ArduPilot's FOLLOW mode, set <code>FOLL_ENABLE=1</code> and <code>FOLL_SYSID=255</code> on the aircraft.</p>
+<h2>Cold starts</h2>
+<p>The board's GPS has no backup battery, so every power-up is a cold start. Allow a few minutes with a clear view of the sky for the first fix.</p>

@@ -173,6 +173,8 @@ class Vehicle:
         self._last_home_req = 0.0
         self._text_buf = b""
         self.gcs_board_seen = 0.0
+        self._scan_board = False
+        self.text_prefixes = set()
 
         from .params import ParamManager
         from .mission import MissionManager
@@ -285,7 +287,7 @@ class Vehicle:
                 break
             if data:
                 self.state.rx_bytes += len(data)
-                if (self._scan_board or "nmea" in self._listeners
+                if (self._scan_board or self.text_prefixes or "nmea" in self._listeners
                         or "gcs-board" in self._listeners):
                     self._scan_text(data)
                 for msg in self.parser.feed(data):
@@ -304,64 +306,76 @@ class Vehicle:
                 self.tlog = None
             self.emit("disconnected", err)
 
+    def add_text_prefix(self, prefix):
+        """Also catch text lines starting with `prefix` (bytes) in the telemetry stream;
+        they are delivered as the 'text-line' event (prefix, line)."""
+        self.text_prefixes.add(prefix)
+
+    def remove_text_prefix(self, prefix):
+        self.text_prefixes.discard(prefix)
+
     def _scan_text(self, data):
         """Pick text lines out of the binary MAVLink stream:
         - NMEA sentences ($GPGGA…) from radio boards that mix their GPS in;
-        - "#GCS {json}" replies from the ESP32 ground-station board (RFD/ESP router).
+        - "#GCS {json}" replies from the ESP32 ground-station board (RFD/ESP router);
+        - lines starting with any prefix registered with add_text_prefix().
         The MAVLink parser skips these bytes on its own, so telemetry is unaffected."""
         buf = self._text_buf + data
-        nmea, gcs = [], []
+        custom = tuple(self.text_prefixes)
+        starts = (b"$", b"#GCS {") + custom
+        longest = max(len(p) for p in starts)
+        lines = []
         while True:
-            i_n = buf.find(b"$")
-            i_g = buf.find(b"#GCS {")
-            starts = [i for i in (i_n, i_g) if i >= 0]
-            if not starts:
-                # keep a tail that could still grow into "#GCS {"
+            hits = [(buf.find(p), p) for p in starts]
+            hits = [(i, p) for i, p in hits if i >= 0]
+            if not hits:
+                # keep a tail that could still grow into one of the prefixes
                 keep = 0
-                for n in range(5, 0, -1):
-                    if buf.endswith(b"#GCS {"[:n]):
-                        keep = n
-                        break
+                for p in starts:
+                    for n in range(min(len(p), len(buf)), 0, -1):
+                        if buf.endswith(p[:n]):
+                            keep = max(keep, n)
+                            break
                 buf = buf[len(buf) - keep:] if keep else b""
                 break
-            start = min(starts)
+            start = min(i for i, _p in hits)
             end = buf.find(b"\n", start)
-            limit = 65536 if start == i_g else 120
             if end < 0:
-                buf = buf[start:] if len(buf) - start < limit else b""
+                buf = buf[start:] if len(buf) - start < 65536 else b""
                 break
-            line = buf[start:end].strip()
+            lines.append(buf[start:end].strip())
             buf = buf[end + 1:]
-            if start == i_g:
-                gcs.append(line[5:])
-            elif 10 < len(line) < 100 and b"*" in line:
-                nmea.append(line)
         self._text_buf = buf
-        for line in nmea:
-            try:
-                self.emit("nmea", line.decode("ascii"))
-            except UnicodeDecodeError:
-                pass
-        for raw in gcs:
-            obj = None
-            for cand in (raw, bytes(b for b in raw if 0x20 <= b <= 0x7E)):
+        for line in lines:
+            for p in custom:
+                if line.startswith(p):
+                    self.emit("text-line", p, line.decode("utf-8", "replace"))
+            if line.startswith(b"#GCS {"):
+                raw = line[5:]
+                obj = None
+                for cand in (raw, bytes(b for b in raw if 0x20 <= b <= 0x7E)):
+                    try:
+                        obj = json.loads(cand.decode("ascii", "ignore"))
+                        break
+                    except ValueError:
+                        continue
+                if isinstance(obj, dict):
+                    self.gcs_board_seen = time.monotonic()
+                    self.emit("gcs-board", obj)
+            elif line.startswith(b"$") and 10 < len(line) < 100 and b"*" in line:
                 try:
-                    obj = json.loads(cand.decode("ascii", "ignore"))
-                    break
-                except ValueError:
-                    continue
-            if isinstance(obj, dict):
-                self.gcs_board_seen = time.monotonic()
-                self.emit("gcs-board", obj)
+                    self.emit("nmea", line.decode("ascii"))
+                except UnicodeDecodeError:
+                    pass
 
-    def send_text(self, text):
-        """Send a plain text command (used for the ESP32 ground-station board)."""
+    def send_text(self, text, end="\r"):
+        """Send a plain text command to a ground-station board sharing the link."""
         t = self.transport
         if t is None:
             return False
         try:
             with self._wlock:
-                t.write((text + "\r").encode())
+                t.write((text + end).encode())
             return True
         except Exception:
             return False

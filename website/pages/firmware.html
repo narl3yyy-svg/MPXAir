@@ -1,0 +1,27 @@
+<!--
+title: Installing firmware
+section: Using MPXAir
+order: 3
+nav: Setup · Firmware
+lead: Put ArduPilot on a flight controller from ArduPilot's official firmware list, or from your own .apj file.
+-->
+<div class="callout warn"><b>Before you start</b><p>Use a USB cable straight to the flight controller, not a telemetry radio. Don't unplug it while it's being written.</p></div>
+<h2>Install from ArduPilot's list</h2>
+<ol class="steps">
+  <li>Open <b>Setup → Install firmware</b>.</li>
+  <li>Choose the <b>Vehicle type</b> (Copter, Plane, Rover, Sub, Helicopter, Antenna tracker, Blimp) and the <b>Release</b>:
+    <ul>
+      <li><b>Stable</b>;</li>
+      <li><b>Beta</b>;</li>
+      <li><b>Latest (development)</b>.</li>
+    </ul></li>
+  <li>Press <b>Detect board</b>. If you're connected, MPXAir restarts the board in bootloader mode. Otherwise, plug the board in within 30 seconds. The board ID is filled in for you.</li>
+  <li>Press <b>Find firmware</b>, select a build, and press <b>Install selected firmware</b>.</li>
+  <li>MPXAir downloads, erases, writes and verifies the firmware (with a CRC check), then reboots the board. Wait about 10 seconds and connect again.</li>
+</ol>
+<h2>Install your own file</h2>
+<p>Press <b>Load a .apj file…</b> and choose an ArduPilot <code>.apj</code> firmware file. MPXAir checks that it matches the board before writing.</p>
+<h2>How it works</h2>
+<p>MPXAir speaks the same bootloader protocol as Mission Planner and ArduPilot's <code>uploader.py</code>. The firmware list comes from
+<code>firmware.ardupilot.org/manifest.json.gz</code> and is cached for 24 hours.</p>
+<div class="callout"><b>Tested</b><p>The uploader was tested against a simulated bootloader with a 1.6 MB CubeOrange image, verified byte for byte. Test it on a board you can recover the first time.</p></div>

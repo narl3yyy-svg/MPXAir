@@ -8,7 +8,8 @@ import threading
 
 APP_ID = "io.github.narl3yyy_svg.MPXAir"
 REPO_URL = "https://github.com/narl3yyy-svg/MPXAir"
-VERSION = "1.1.0"
+DOCS_URL = "https://narl3yyy-svg.github.io/MPXAir/"
+VERSION = "1.2.0"
 
 
 def _base(env, default):

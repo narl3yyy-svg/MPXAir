@@ -1,0 +1,31 @@
+<!--
+title: Flight modes, failsafes and battery
+section: Using MPXAir
+order: 5
+nav: Setup · Modes and failsafes
+lead: What each switch position does, what happens when something goes wrong, and how much battery is left.
+-->
+<h2>Flight modes</h2>
+<p><b>Setup → Flight modes</b> lists the six positions of your mode switch with their PWM ranges. Choose a mode for each.
+The row for the current switch position is highlighted live, so flick the switch to check. Copters also have <b>Simple</b> and <b>Super simple</b> boxes. Press <b>Save modes</b>.</p>
+
+<h2>Failsafes</h2>
+<p><b>Setup → Failsafe</b> groups the settings for:</p>
+<ul>
+  <li><b>Radio (throttle) failsafe</b>: what to do when the RC signal is lost.</li>
+  <li><b>Battery failsafe</b>: low and critical voltage or mAh, and the actions.</li>
+  <li><b>Ground station failsafe</b>: lost telemetry.</li>
+  <li><b>EKF failsafe</b>: a bad position estimate.</li>
+  <li><b>Return to launch</b>: RTL altitude, final altitude, loiter time, speed.</li>
+</ul>
+<p>The live line at the top shows the throttle input and warns if it is below the failsafe value.</p>
+
+<h2>Battery monitor</h2>
+<figure><img src="assets/img/setup-battery.jpg" alt="Battery monitor"></figure>
+<p>Set the sensor type, capacity, pins and scaling. Each setting shows its full value under its name, and hovering shows what it does.</p>
+<h3>Calibrate the voltage</h3>
+<ol class="steps">
+  <li>Measure the battery with a multimeter.</li>
+  <li>Enter the reading in <b>Measured voltage</b> and press <b>Apply measured voltage</b>.</li>
+  <li>MPXAir corrects <code>BATT_VOLT_MULT</code> so the reported voltage matches.</li>
+</ol>

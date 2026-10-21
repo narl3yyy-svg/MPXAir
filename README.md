@@ -19,6 +19,13 @@
 </p>
 
 <p align="center">
+  <a href="https://narl3yyy-svg.github.io/MPXAir/"><b>📖 Read the manual</b></a> ·
+  <a href="https://narl3yyy-svg.github.io/MPXAir/install.html">Install</a> ·
+  <a href="https://narl3yyy-svg.github.io/MPXAir/quick-start.html">Quick start</a> ·
+  <a href="https://narl3yyy-svg.github.io/MPXAir/custom-ground-station.html">Connect your own ground station</a>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/fly.png" width="860" alt="MPXAir Fly screen: HUD, live map with the aircraft and the ground station">
 </p>
 
@@ -31,7 +38,7 @@
 - [Installing](#installing)
 - [Connecting](#connecting)
 - [Features](#features)
-- [Ground station hardware (RFD900 + ESP32)](#ground-station-hardware-rfd900--esp32)
+- [Ground station hardware](#ground-station-hardware)
 - [Screenshots](#screenshots)
 - [Testing](#testing)
 - [Roadmap](#roadmap)
@@ -207,7 +214,22 @@ The Ground screen also has:
   updates saved areas when you're back online.
 - Internet use is set to *Online*, *Saver* or *Offline*.
 
-## Ground station hardware (RFD900 + ESP32)
+## Ground station hardware
+
+MPXAir reads the GPS of a ground station that shares the telemetry link with the aircraft. Choose its type on the
+**Ground** tab. Each type has its own editable settings, plus a **Test now** button and the last message received.
+
+| Type | How the GPS arrives |
+|---|---|
+| RFD900 + ESP32 board | polled with `#GCS status`; a JSON reply |
+| GPS mixed into the telemetry | NMEA sentences or MAVLink GPS already on the link |
+| MAVLink GPS from the ground station | `GPS_RAW_INT` / `GLOBAL_POSITION_INT` / `GPS_INPUT` from a ground system ID (255 by default) |
+| Custom board, JSON replies | any poll command and reply prefix, with configurable JSON field paths and scaling |
+| Custom board, comma-separated replies | lines such as `$GND,lat,lon,alt,sats,fix`, with configurable columns |
+
+Building your own? See **[Connect your own ground station](https://narl3yyy-svg.github.io/MPXAir/custom-ground-station.html)**, which has example firmware.
+
+### RFD900 + ESP32
 
 MPXAir works directly with an **RFD900 + ESP32-S3 ground station board**. On these boards:
 
@@ -289,7 +311,10 @@ MPXAir/
 │   ├── ui/               screens: fly, plan, setup, params, logs, ground, map, HUD
 │   ├── sim/              demo drone and simulated ground-station board
 │   └── data/             parameter docs, command lists, motor layouts, icon
+├── website/              documentation site (pages + assets), published to GitHub Pages
 ├── tools/gen_mavlink.py  rebuilds mpxair/mavlink/defs.py from the XML definitions
+├── tools/build_site.py   builds the documentation into website/_site
+├── tools/publish_site.sh publishes the documentation to the gh-pages branch
 └── docs/screenshots/
 ```
 

@@ -1,0 +1,74 @@
+<!--
+title: Fly screen
+section: Using MPXAir
+order: 1
+nav: Fly
+lead: Everything you need while the aircraft is flying: the HUD, the map, live numbers and quick actions.
+-->
+<figure><img src="assets/img/fly.jpg" alt="Fly screen"><figcaption>The Fly screen with the aircraft (AIR) and the ground station (GROUND) on the map.</figcaption></figure>
+
+<h2>HUD</h2>
+<p>The artificial horizon at the top left works like Mission Planner's:</p>
+<ul>
+  <li><b>Horizon and pitch ladder</b>: the aircraft's roll and pitch.</li>
+  <li><b>Heading tape</b> along the top. A green marker shows the bearing to the current target.</li>
+  <li><b>Speed tape</b> (left) and <b>altitude tape</b> (right, height above home). A climb-rate bar is on the right edge.</li>
+  <li><b>ARMED / DISARMED</b> in the middle, plus <b>NO TELEMETRY</b> if the link drops.</li>
+  <li>Along the bottom: flight mode, battery, GPS, distance to the waypoint, link quality and the time.</li>
+  <li>Warnings in orange or red: <b>VIBE</b> (vibration), <b>EKF</b> (position estimate) and <b>PREARM</b> (not ready to arm).</li>
+</ul>
+
+<h2>The map</h2>
+<ul>
+  <li><b>AIR</b>: the aircraft, as a red arrow when armed, with a heading line and a target-bearing line.</li>
+  <li><b>GROUND</b>: your <a href="ground-position.html">ground station</a>, as a blue antenna badge with its satellite count. A dashed line joins it to the aircraft, labelled with the distance.</li>
+  <li><b>H</b>: home. The mission, geofence and rally points are drawn too.</li>
+  <li><b>Trail</b>: where the aircraft has been. It keeps the last 20 seconds by default and older track fades out. Change this with <i>Trail on map keeps</i> on the Actions tab, or in Preferences.</li>
+  <li><b>GPS card</b> (bottom-left), as in Mission Planner: fix type, satellites and HDOP, green, orange or red by quality.</li>
+  <li><b>Status chips</b> (top): armed state, mode, altitude and speed, battery, link quality, and <i>GND GPS</i> (the ground station's satellites and its distance to the aircraft).</li>
+</ul>
+<h3>Map buttons (right side)</h3>
+<table>
+  <tr><th>Button</th><th>What it does</th></tr>
+  <tr><td>Follow</td><td>Keeps the map centred on the aircraft.</td></tr>
+  <tr><td>Ground station</td><td>Shows or hides the ground station on the map.</td></tr>
+  <tr><td>Keep both in view</td><td>Frames the aircraft and the ground station together and follows both.</td></tr>
+  <tr><td>Zoom + / −</td><td>Zoom. The scroll wheel and touchpad pinch work too.</td></tr>
+  <tr><td>Map type</td><td>Satellite, street, topographic… and <a href="maps.html#offline-maps">offline maps</a>.</td></tr>
+  <tr><td>Fit mission</td><td>Shows the whole mission.</td></tr>
+</table>
+<h3>Right-click menu</h3>
+<p><b>Fly to here</b> (guided), <b>Fly to here at altitude…</b>, <b>Point camera here</b>, <b>Set home here</b>, <b>Measure distance from here</b>, <b>Centre map here</b>, <b>Set ground station position here</b> and <b>Copy coordinates</b>.</p>
+
+<h2>Quick view</h2>
+<p>Big, easy-to-read numbers. You can have 2 to 16 tiles.</p>
+<ul>
+  <li><b>Click a tile</b> to choose what it shows, from 45 values in sections: height and position, speed and attitude, navigation, battery, GPS and health, telemetry link, and ground station.</li>
+  <li><b>Add a tile</b> is at the bottom. <b>Remove this tile</b> is in each tile's menu.</li>
+</ul>
+<p>Useful extras include <i>Distance flown</i>, <i>Power (W)</i>, <i>Fade margin</i>, <i>Radio RSSI (aircraft)</i>, <i>Distance / bearing / elevation from ground</i> and <i>Vibration</i>.</p>
+
+<h2>Actions</h2>
+<figure><img src="assets/img/fly-actions.jpg" alt="Actions tab"></figure>
+<ul>
+  <li><b>Arm / Disarm.</b> If arming is refused, MPXAir shows the aircraft's reason and offers <i>Force Arm</i> for experts.</li>
+  <li><b>Takeoff.</b> Switches to GUIDED, arms and climbs to the height you enter. Planes switch to TAKEOFF mode instead.</li>
+  <li><b>Mode buttons</b> for the common modes, plus a list of every mode.</li>
+  <li><b>Mission</b>: <i>Set WP</i>, <i>Start Mission</i>, <i>Restart Mission</i>.</li>
+  <li><b>Guided changes</b>: change speed and altitude.</li>
+  <li><b>Vehicle</b>:
+    <ul>
+      <li>calibrate the gyro or barometer, reboot, trigger the camera;</li>
+      <li><i>Set Home Here</i>, <i>Clear Track</i>, and the trail length.</li>
+    </ul></li>
+</ul>
+
+<h2>Status</h2>
+<figure><img src="assets/img/fly-status.jpg" alt="Status tab"></figure>
+<p><b>Air status</b> covers the vehicle, armed and ready, battery, GPS, EKF, vibration, telemetry link, SiK radio RSSI and noise, home, flight time, wind and firmware.</p>
+<p><b>Ground status</b> covers your position and its source, the aircraft's distance, bearing and elevation from you, the laptop battery, map server and internet status, telemetry recording, data rates, Follow Me and the antenna tracker.</p>
+<p>Each row has a green, orange or red dot.</p>
+
+<h2>Messages and RC/Servo</h2>
+<p><b>Messages</b> lists everything the autopilot says, colour-coded (errors in red, warnings in orange). Important errors also pop up as a notification.
+<b>RC/Servo</b> shows the 16 radio inputs and 16 outputs as live bars.</p>

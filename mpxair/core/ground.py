@@ -52,6 +52,10 @@ class GroundLocation:
         self.listeners = []
         self.board = {}
         self.hdop = None
+        self.profile = {}
+        self._prefix = None
+        self.last_raw = ""
+        self.last_raw_time = 0.0
 
     def valid(self):
         if self.lat is None:
@@ -75,7 +79,13 @@ class GroundLocation:
 
     def start(self):
         self.stop()
-        cfg = self.settings.get("ground_gps") or {}
+        cfg = dict(self.settings.get("ground_gps") or {})
+        # older settings: "esp32" and "link" are now profiles of the "board" source
+        legacy = {"esp32": "rfd_esp32", "link": "telemetry"}
+        if cfg.get("source") in legacy:
+            cfg["board_profile"] = legacy[cfg["source"]]
+            cfg["source"] = "board"
+            self.settings.set("ground_gps", cfg)
         self.source = cfg.get("source", "none")
         self._stop = threading.Event()
         if self.source == "manual":
@@ -91,10 +101,8 @@ class GroundLocation:
             self._thread.start()
         elif self.source == "geoclue":
             self._start_geoclue()
-        elif self.source == "link":
-            self._start_link()
-        elif self.source == "esp32":
-            self._start_board()
+        elif self.source == "board":
+            self._start_board(cfg.get("board_profile", "rfd_esp32"))
         else:
             self.lat = self.lon = None
             self.status = "Not set"
@@ -105,81 +113,114 @@ class GroundLocation:
         if self.vehicle:
             for h in self._link_handles:
                 self.vehicle.off(h)
+            if self._prefix:
+                self.vehicle.remove_text_prefix(self._prefix)
         self._link_handles = []
+        self._prefix = None
 
-    # ---- RFD/ESP32 ground-station board: its own GPS, read with "#GCS status"
-    def _start_board(self):
+    # ---- a ground station that shares the telemetry link (see groundprofiles.py)
+    def _start_board(self, pid):
+        from . import groundprofiles as gp
+        p = self.profile = gp.profile(self.settings, pid)
         self.board = {}
+        self.last_raw = ""
+        self.last_raw_time = 0.0
         if not self.vehicle:
             self.status = "No telemetry link"
             return
-        self.status = "Connect to the ground station board (top right) to read its GPS"
-        self._link_handles = [self.vehicle.on("gcs-board", self._board_reply)]
-        threading.Thread(target=self._board_poll, args=(self._stop,), daemon=True,
-                         name="gcs-board").start()
+        self.status = f"Connect to the ground station (top right) to read its GPS — {p['name']}"
+        v = self.vehicle
+        if p["kind"] in ("text_json", "text_csv"):
+            self._prefix = p["prefix"].encode()
+            v.add_text_prefix(self._prefix)
+            self._link_handles.append(v.on("text-line", self._text_reply))
+        if p["kind"] == "telemetry":
+            self._link_handles.append(v.on("nmea", self._link_nmea))
+        if p["kind"] in ("telemetry", "mavlink"):
+            self._link_handles.append(v.on("foreign-position", self._link_mavlink))
+        threading.Thread(target=self._board_loop, args=(self._stop, p), daemon=True,
+                         name="ground-board").start()
 
-    def _board_poll(self, stop):
-        said_hello = False
+    def _board_loop(self, stop, p):
+        from . import groundprofiles as gp
+        end = gp.unescape(p.get("line_end", "\\r"))
+        opened = None
         while not stop.is_set():
             v = self.vehicle
-            if v.is_open and getattr(v.transport, "kind", "") in ("serial", "tcp", "udp", "udpci"):
-                if not said_hello:
-                    v.send_text("#GCS hello")
-                    said_hello = True
-                v.send_text("#GCS status")
-                if v.gcs_board_seen and time.monotonic() - v.gcs_board_seen > 5:
-                    self.status = "The ground station board stopped answering"
-                elif not v.gcs_board_seen:
-                    self.status = "Waiting for the ground station board to answer…"
+            t = v.transport
+            if v.is_open and t is not None and getattr(t, "kind", "") != "tlog":
+                if opened is not t:
+                    opened = t
+                    if p.get("release_lines") and getattr(t, "kind", "") == "serial":
+                        t.set_rts(False)
+                        t.set_dtr(False)
+                    if p.get("hello"):
+                        v.send_text(p["hello"], end)
+                if p.get("poll") and p["kind"] in ("text_json", "text_csv"):
+                    v.send_text(p["poll"], end)
+                age = time.time() - self.updated if self.updated else None
+                if not self.last_raw_time:
+                    self.status = {"text_json": "Waiting for the ground station to answer…",
+                                   "text_csv": "Waiting for the ground station to answer…",
+                                   "telemetry": "Listening for GPS data in the telemetry…",
+                                   "mavlink": "Listening for MAVLink GPS from the ground station…"}[p["kind"]]
+                elif age is not None and age > 5 and self.fix:
+                    self.status = "The ground station stopped sending its position"
             else:
-                said_hello = False
-            stop.wait(1.0)
+                opened = None
+            stop.wait(max(0.2, float(p.get("interval") or 1.0)))
 
-    def _board_reply(self, r):
-        if "fw" not in r:
-            return          # replies to other commands ({"ok": …}, {"nmea": …})
-        self.board = r
-        g = r.get("gps") or {}
+    def _text_reply(self, prefix, line):
+        from . import groundprofiles as gp
+        p = self.profile
+        if prefix != self._prefix:
+            return
+        r = gp.parse_reply(p, line)
+        self.last_raw = line[:400]
+        self.last_raw_time = time.time()
+        if r is None:
+            return
+        if p["kind"] == "text_json" and isinstance(r["raw"], dict):
+            self.board = r["raw"]
         name = r.get("name") or "Ground station"
-        if g.get("fix") and g.get("lat") is not None:
-            self._set(g["lat"] / 1e7, g["lon"] / 1e7, (g.get("altMm") or 0) / 1000.0, int(g.get("sats") or 0))
-            self.hdop = g.get("hdop")
-            self.status = f"{name} GPS: {self.sats} satellites, HDOP {self.hdop or 0:.1f}"
+        if r["lat"] is not None and r["fix"]:
+            self._set(r["lat"], r["lon"], r["alt"], int(r["sats"] or 0))
+            self.hdop = r["hdop"]
+            self.status = f"{name} GPS: {self.sats} satellites" + (f", HDOP {self.hdop:.1f}" if self.hdop else "")
         else:
             self.fix = False
-            self.sats = int(g.get("sats") or 0)
-            self.status = (f"{name} GPS has no fix yet ({self.sats} satellites seen)" if g.get("nmea")
-                           else f"{name}: no data from its GPS module")
+            self.sats = int(r["sats"] or 0)
+            self.status = f"{name} GPS has no fix yet" + (f" ({self.sats} satellites seen)" if self.sats else "")
 
     def board_follow(self, on):
-        """Ask the board to send its position to the aircraft (ArduPilot Follow mode, FOLL_SYSID=255)."""
-        if self.vehicle and self.vehicle.is_open:
-            return self.vehicle.send_text(f"#GCS follow {1 if on else 0}")
+        """Ask the ground station to send its own position to the aircraft (ArduPilot Follow mode)."""
+        from . import groundprofiles as gp
+        p = getattr(self, "profile", None) or {}
+        cmd = p.get("follow_on" if on else "follow_off")
+        if cmd and self.vehicle and self.vehicle.is_open:
+            return self.vehicle.send_text(cmd, gp.unescape(p.get("line_end", "\\r")))
         return False
-
-    # ---- GPS on the telemetry radio board (shares the vehicle's connection)
-    def _start_link(self):
-        if not self.vehicle:
-            self.status = "No telemetry link"
-            return
-        self.status = "Waiting for GPS data from the radio board (connect first)"
-        self._link_handles = [self.vehicle.on("nmea", self._link_nmea),
-                              self.vehicle.on("foreign-position", self._link_mavlink)]
 
     def _link_nmea(self, line):
         before = self.updated
         self._nmea_line(line)
+        self.last_raw, self.last_raw_time = line, time.time()
         if self.updated != before:
-            self.status = f"Radio board GPS (NMEA), {self.sats} satellites"
+            self.status = f"Ground GPS (NMEA in the telemetry), {self.sats} satellites"
         elif not self.fix and "no fix" in self.status:
-            self.status = "Radio board GPS has no fix yet (NMEA)"
+            self.status = "Ground GPS has no fix yet (NMEA)"
 
     def _link_mavlink(self, m):
+        p = getattr(self, "profile", None) or {}
+        want = int(p.get("sysid") or 0)
+        if want and m._sysid != want:
+            return
         name = m._def.name
+        self.last_raw, self.last_raw_time = f"{name} from system {m._sysid}", time.time()
         try:
             if name in ("GPS_RAW_INT", "GPS2_RAW", "HIL_GPS"):
                 if m.fix_type < 2:
-                    self.status = f"Radio board GPS (system {m._sysid}) has no fix yet"
+                    self.status = f"Ground GPS (system {m._sysid}) has no fix yet"
                     return
                 sats = m.satellites_visible if m.satellites_visible != 255 else 0
                 self._set(m.lat / 1e7, m.lon / 1e7, m.alt / 1000.0, sats)
@@ -193,7 +234,7 @@ class GroundLocation:
                 self._set(m.lat / 1e7, m.lon / 1e7, m.alt / 1000.0, self.sats)
             else:
                 return
-            self.status = f"Radio board GPS (MAVLink, system {m._sysid}), {self.sats} satellites"
+            self.status = f"Ground GPS (MAVLink, system {m._sysid})" + (f", {self.sats} satellites" if self.sats else "")
         except AttributeError:
             pass
 
@@ -239,7 +280,7 @@ class GroundLocation:
                     return
                 self._set(lat, lon, float(f[9] or 0), int(f[7] or 0))
                 self.status = f"GPS fix, {self.sats} satellites"
-            elif kind == "RMC" and len(f) > 6 and f[2] == "A" and self.source in ("nmea", "link"):
+            elif kind == "RMC" and len(f) > 6 and f[2] == "A" and self.source in ("nmea", "board"):
                 lat = _nmea_deg(f[3], f[4])
                 lon = _nmea_deg(f[5], f[6])
                 if lat is not None and lon is not None and time.time() - self.updated > 1.5:

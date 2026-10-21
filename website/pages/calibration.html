@@ -1,0 +1,35 @@
+<!--
+title: Frame and calibration
+section: Using MPXAir
+order: 4
+nav: Setup · Calibration
+lead: Frame type, accelerometer, compass and radio calibration — do these before the first flight.
+-->
+<h2>Frame type</h2>
+<p><b>Setup → Frame type</b> sets <code>FRAME_CLASS</code> and <code>FRAME_TYPE</code> (or the QuadPlane <code>Q_FRAME_*</code> settings) and the board orientation.
+A diagram shows the motor layout of the selected frame. Reboot after changing the frame class.</p>
+
+<h2>Accelerometer</h2>
+<figure><img src="assets/img/setup-accel.jpg" alt="Accelerometer calibration"></figure>
+<ol class="steps">
+  <li>Press <b>Calibrate accelerometer</b>.</li>
+  <li>MPXAir asks for six positions in turn: level, left side, right side, nose down, nose up and on its back. Hold the vehicle still and press <b>Done — next position</b> each time.</li>
+  <li>When it says <i>Calibration successful</i>, reboot the autopilot.</li>
+</ol>
+<p>Also available: <b>Calibrate level only</b> (trims roll and pitch with the vehicle level) and <b>Simple calibration</b> (one position, for large vehicles).</p>
+
+<h2>Compass</h2>
+<figure><img src="assets/img/setup-compass.jpg" alt="Compass calibration"></figure>
+<ol class="steps">
+  <li>Move away from metal, cars and magnets. Press <b>Start</b>.</li>
+  <li>Slowly turn the vehicle so each side points at the ground in turn. The bars show progress for each compass.</li>
+  <li>When all compasses say <i>Success</i>, press <b>Accept</b> if asked, then reboot.</li>
+</ol>
+<p>Lower fitness numbers are better. Below the calibration are the compass settings (use, orientation, fitness).</p>
+
+<h2>Radio</h2>
+<ol class="steps">
+  <li>Switch the transmitter on. You should see the bars move.</li>
+  <li>Press <b>Calibrate</b> and move every stick and switch to both ends.</li>
+  <li>Centre the sticks, put the throttle down, and press <b>Done</b>. Check the values and press <b>Save</b>.</li>
+</ol>

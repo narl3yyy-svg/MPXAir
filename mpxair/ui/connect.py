@@ -301,7 +301,7 @@ class ConnectBar(Gtk.Box):
     def _board_found(self):
         g = self.shared.settings.get("ground_gps") or {}
         if g.get("source", "none") == "none":
-            g = dict(g, source="esp32")
+            g = dict(g, source="board", board_profile="rfd_esp32")
             self.shared.settings.set("ground_gps", g)
             self.shared.ground.start()
             self.shared.hub.emit("ground-changed")

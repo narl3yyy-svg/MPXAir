@@ -1,0 +1,21 @@
+<!--
+title: Questions and answers
+section: Help
+order: 2
+nav: FAQ
+lead: Short answers to common questions.
+-->
+<h3>Does MPXAir work with PX4?</h3>
+<p>No. MPXAir is made for ArduPilot (Copter, Plane, Rover, Sub, Antenna tracker).</p>
+<h3>Can I use my Mission Planner files?</h3>
+<p>Yes. MPXAir reads and writes <code>.waypoints</code> missions and <code>.param</code> files in Mission Planner's format, and it reads QGroundControl and MAVProxy parameter files.</p>
+<h3>Does it need the internet?</h3>
+<p>Only for map tiles, downloading firmware and updating parameter descriptions. Save map areas with Offline Maps before going to the field.</p>
+<h3>Where are my files?</h3>
+<p>Telemetry recordings are in <code>~/Documents/MPXAir/telemetry-logs</code>, downloaded logs in <code>~/Documents/MPXAir/flight-logs</code>, settings in <code>~/.config/mpxair</code>, and maps in <code>~/.cache/mpxair</code>.</p>
+<h3>Can I run it from a USB stick?</h3>
+<p>Yes, with <code>./run.sh --portable</code>. Everything is then kept in the MPXAir folder.</p>
+<h3>Can I use it alongside another ground station?</h3>
+<p>Not on the same serial port, because only one program can open it. Use UDP or TCP forwarding (for example from MAVProxy) to share a link.</p>
+<h3>What's not in MPXAir yet?</h3>
+<p>Joystick control, a video feed, scripting, multiple vehicles at once, and some specialist setup screens. Those settings can still be changed on the Parameters tab.</p>

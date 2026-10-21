@@ -1,4 +1,6 @@
 """Ground page: ground-station position, Follow Me and antenna tracker."""
+import time
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -7,14 +9,13 @@ from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from ..core.ground import tracker_angles  # noqa: E402
 from ..core.transport import BAUD_RATES, TransportError, list_serial_ports  # noqa: E402
-from .util import alert, button, confirm, fmt_dist, label, readable, toast  # noqa: E402
+from .util import alert, button, combo_row, confirm, fmt_dist, label, readable, toast  # noqa: E402
 
 SOURCES = [
     ("none", "Not used", "MPXAir doesn't know where you are."),
-    ("esp32", "Ground station board GPS (RFD900 + ESP32)",
-     "The GPS wired to your ground station's ESP32, read over the same USB connection as the aircraft."),
-    ("link", "GPS messages in the telemetry stream",
-     "For radios that mix NMEA sentences or MAVLink GPS messages into the telemetry."),
+    ("board", "A ground station on the telemetry link",
+     "Your ground station's own GPS, read over the same connection as the aircraft "
+     "(for example an RFD900 + ESP32 board). Choose its type below."),
     ("nmea", "Separate USB GPS receiver",
      "A GPS plugged in on its own USB/serial port, sending NMEA."),
     ("geoclue", "This computer's location",
@@ -83,6 +84,9 @@ class GroundPage(Gtk.Box):
         box.append(label("Tell MPXAir where you (and your antenna) are. This is used for the Ground status "
                          "panel, Follow Me and the antenna tracker.", ["dim-label"], wrap=True))
         box.append(self._position_group())
+        box.append(self._board_group())
+        box.append(self.settings_grp)
+        self._vis()
         box.append(self._follow_group())
         box.append(self._tracker_group())
         GLib.timeout_add(500, self._tick)
@@ -92,16 +96,9 @@ class GroundPage(Gtk.Box):
         cfg = dict(self.s.get("ground_gps") or {})
         grp = Adw.PreferencesGroup(title="Ground position")
         grp.set_description("Where does the ground station's position come from?")
-        self.src = SourcePicker(grp, SOURCES, cfg.get("source", "none"))
-        self.board_row = Adw.ActionRow(title="Ground station board", subtitle="Not seen yet")
-        grp.add(self.board_row)
-        self.board_follow = Adw.SwitchRow(
-            title="Board sends its position to the aircraft",
-            subtitle="For ArduPilot's Follow mode (set FOLL_ENABLE=1 and FOLL_SYSID=255 on the aircraft). "
-                     "The board sends GLOBAL_POSITION_INT twice a second.")
-        self.board_follow.connect("notify::active", self._board_follow_toggled)
-        self._board_follow_sync = False
-        grp.add(self.board_follow)
+        src = cfg.get("source", "none")
+        src = {"esp32": "board", "link": "board"}.get(src, src)
+        self.src = SourcePicker(grp, SOURCES, src)
         self.ports, model = port_model()
         self.gps_port = Adw.ComboRow(title="GPS serial port", model=model)
         if cfg.get("device") in self.ports:
@@ -125,17 +122,174 @@ class GroundPage(Gtk.Box):
         btns.set_valign(Gtk.Align.CENTER)
         grp.set_header_suffix(btns)
         self.src.on_change = self._source_changed
-        self._vis()
         self.shared.hub.on("ground-changed", self._sync_source)
         return grp
 
+    # ------------------------------------------------- ground station type
+    def _board_group(self):
+        from ..core import groundprofiles as gp
+        cfg = self.s.get("ground_gps") or {}
+        grp = Adw.PreferencesGroup(title="Ground station type",
+                                   description="How MPXAir reads the GPS of a ground station that shares the "
+                                               "telemetry link. Each type has its own settings.")
+        self.profile_ids = list(gp.ORDER)
+        cur = cfg.get("board_profile", "rfd_esp32")
+        self.type_row = combo_row("Type", [gp.PRESETS[i]["name"] for i in self.profile_ids],
+                                  self.profile_ids.index(cur) if cur in self.profile_ids else 0,
+                                  self._profile_changed,
+                                  tooltip="Pick the kind of ground station you have, then check its settings below")
+        grp.add(self.type_row)
+        self.about_row = Adw.ActionRow(title="About this type", use_markup=False)
+        self.about_row.set_subtitle_lines(6)
+        grp.add(self.about_row)
+        self.board_row = Adw.ActionRow(title="Ground station", subtitle="Not seen yet", use_markup=False)
+        grp.add(self.board_row)
+        self.board_follow = Adw.SwitchRow(
+            title="Ground station sends its position to the aircraft",
+            subtitle="For ArduPilot's Follow mode (set FOLL_ENABLE=1 and FOLL_SYSID=255 on the aircraft).")
+        self.board_follow.connect("notify::active", self._board_follow_toggled)
+        self._board_follow_sync = False
+        grp.add(self.board_follow)
+        self.raw_row = Adw.ActionRow(title="Last message from the ground station", subtitle="—", use_markup=False)
+        self.raw_row.set_subtitle_lines(4)
+        self.raw_row.add_css_class("property")
+        grp.add(self.raw_row)
+        self.board_grp = grp
+        self.settings_grp = Adw.PreferencesGroup(title="Settings for this type")
+        sbtns = Gtk.Box(spacing=8, valign=Gtk.Align.CENTER)
+        sbtns.append(button("Reset", self._reset_profile, tooltip="Put this type's settings back to the defaults"))
+        sbtns.append(button("Test now", self._test_profile,
+                            tooltip="Send the poll command once and show what comes back"))
+        sbtns.append(button("Save", self._save_profile, ["suggested-action"]))
+        self.settings_grp.set_header_suffix(sbtns)
+        self.settings_grp.set_description("Building your own ground station? The manual explains each type and "
+                                          "has example firmware.")
+        help_row = Adw.ActionRow(title="How to connect your own ground station", activatable=True,
+                                 subtitle="Opens the online manual")
+        help_row.add_suffix(Gtk.Image(icon_name="adw-external-link-symbolic"))
+        help_row.connect("activated", lambda *_: self._open_help())
+        grp.add(help_row)
+        self.profile_rows = {}
+        self._fill_profile()
+        return grp
+
+    def _open_help(self):
+        from ..app import open_docs
+        open_docs(self.get_root(), "custom-ground-station.html")
+
+    def _current_pid(self):
+        return self.profile_ids[self.type_row.get_selected()]
+
+    def _profile_changed(self, i):
+        cfg = dict(self.s.get("ground_gps") or {})
+        cfg["board_profile"] = self.profile_ids[i]
+        self.s.set("ground_gps", cfg)
+        self._fill_profile()
+        if cfg.get("source") == "board":
+            self.shared.ground.start()
+
+    def _fill_profile(self):
+        from ..core import groundprofiles as gp
+        pid = self._current_pid()
+        p = gp.profile(self.s, pid)
+        self.about_row.set_subtitle(p["about"])
+        has_follow = bool(p.get("follow_on"))
+        self.board_follow.set_visible(has_follow)
+        self.board_row.set_visible(p["kind"] == "text_json")
+        for row in self.profile_rows.values():
+            self.settings_grp.remove(row[0])
+        self.profile_rows = {}
+        for key in gp.EDITABLE[p["kind"]]:
+            title, help_, typ = gp.FIELDS[key]
+            val = p.get(key)
+            if typ == "bool":
+                row = Adw.SwitchRow(title=title, subtitle=help_, active=bool(val), use_markup=False)
+                getter = row.get_active
+            else:
+                row = Adw.ActionRow(title=title, subtitle=help_, use_markup=False)
+                row.set_subtitle_lines(3)
+                entry = Gtk.Entry(text="" if val is None else f"{val:g}" if isinstance(val, float) else str(val),
+                                  valign=Gtk.Align.CENTER, width_chars=16, max_width_chars=22)
+                entry.add_css_class("mono")
+                row.add_suffix(entry)
+                getter = entry.get_text
+            row.set_tooltip_text(help_)
+            self.settings_grp.add(row)
+            self.profile_rows[key] = (row, getter, typ)
+
+    def _collect_profile(self):
+        from ..core import groundprofiles as gp
+        pid = self._current_pid()
+        kind = gp.PRESETS[pid]["kind"]
+        out = {}
+        for key, (_row, getter, typ) in self.profile_rows.items():
+            v = getter()
+            try:
+                if typ == "bool":
+                    out[key] = bool(v)
+                elif typ == "float":
+                    out[key] = float(v)
+                elif typ == "int":
+                    out[key] = int(float(v or 0))
+                elif typ == "field" and kind == "text_csv":
+                    out[key] = int(v) if str(v).strip() else 0
+                else:
+                    out[key] = str(v)
+            except ValueError:
+                raise ValueError(f"“{gp.FIELDS[key][0]}” must be a number.")
+        if kind in ("text_json", "text_csv") and not out.get("prefix"):
+            raise ValueError("The reply prefix can't be empty: MPXAir uses it to find the board's replies.")
+        return pid, out
+
+    def _save_profile(self):
+        from ..core import groundprofiles as gp
+        try:
+            pid, values = self._collect_profile()
+        except ValueError as e:
+            alert(self.get_root(), "Can't save these settings", str(e))
+            return
+        gp.save_profile(self.s, pid, values)
+        cfg = dict(self.s.get("ground_gps") or {})
+        if cfg.get("source") == "board" and cfg.get("board_profile") == pid:
+            self.shared.ground.start()
+        toast("Ground station settings saved")
+
+    def _reset_profile(self):
+        from ..core import groundprofiles as gp
+        pid = self._current_pid()
+        gp.reset_profile(self.s, pid)
+        self._fill_profile()
+        if (self.s.get("ground_gps") or {}).get("board_profile") == pid:
+            self.shared.ground.start()
+        toast("Settings put back to the defaults")
+
+    def _test_profile(self):
+        from ..core import groundprofiles as gp
+        g = self.shared.ground
+        if (self.s.get("ground_gps") or {}).get("source") != "board":
+            self.src.set_selected([x[0] for x in SOURCES].index("board"))
+        if not self.v.is_open:
+            alert(self.get_root(), "Not connected",
+                  "Connect to the ground station first (top right), then press Test now.")
+            return
+        p = gp.profile(self.s, self._current_pid())
+        if p.get("poll") and p["kind"] in ("text_json", "text_csv"):
+            self.v.send_text(p["poll"], gp.unescape(p.get("line_end", "\\r")))
+            toast(f"Sent “{p['poll']}” — the reply appears below")
+        else:
+            toast("This type doesn't send anything; MPXAir is listening for the ground station's data")
+
+
     def _source_changed(self):
         self._vis()
-        if SOURCES[self.src.get_selected()][0] in ("none", "esp32", "link", "geoclue"):
+        if SOURCES[self.src.get_selected()][0] in ("none", "board", "geoclue"):
             self._apply_pos(quiet=True)
 
     def _sync_source(self, *_):
         want = (self.s.get("ground_gps") or {}).get("source", "none")
+        pid = (self.s.get("ground_gps") or {}).get("board_profile")
+        if pid in getattr(self, "profile_ids", []) and self._current_pid() != pid:
+            self.type_row.set_selected(self.profile_ids.index(pid))
         ids = [x[0] for x in SOURCES]
         if want in ids and self.src.get_selected() != ids.index(want):
             cb = self.src.on_change
@@ -164,8 +318,8 @@ class GroundPage(Gtk.Box):
 
     def _vis(self):
         src = SOURCES[self.src.get_selected()][0]
-        self.board_row.set_visible(src == "esp32")
-        self.board_follow.set_visible(src == "esp32")
+        self.board_grp.set_visible(src == "board")
+        self.settings_grp.set_visible(src == "board")
         for w in (self.gps_port, self.gps_baud):
             w.set_visible(src == "nmea")
         for w in (self.m_lat, self.m_lon):
@@ -355,8 +509,13 @@ class GroundPage(Gtk.Box):
             self.pos_status.set_subtitle(f"{g.lat:.6f}, {g.lon:.6f} · {g.alt:.0f} m · {g.status}")
         else:
             self.pos_status.set_subtitle(g.status)
+        if g.last_raw:
+            age = time.time() - g.last_raw_time
+            self.raw_row.set_subtitle(f"{g.last_raw}\n({age:.0f} s ago)")
+        elif g.source == "board":
+            self.raw_row.set_subtitle("Nothing received yet")
         b = getattr(g, "board", None) or {}
-        if b:
+        if b and "fw" in b:
             gp = b.get("gps") or {}
             cnt = b.get("cnt") or {}
             bits = [f"{b.get('name') or 'Ground station'} · firmware {b.get('fw', '?')}"]

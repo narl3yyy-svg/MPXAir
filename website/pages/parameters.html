@@ -1,0 +1,28 @@
+<!--
+title: Parameters
+section: Using MPXAir
+order: 7
+nav: Parameters
+lead: Every setting on the aircraft, grouped, searchable and explained — and changed safely.
+-->
+<figure><img src="assets/img/parameters.jpg" alt="Parameters screen"></figure>
+<h2>Finding a parameter</h2>
+<ul>
+  <li><b>Groups</b> (left): browse by subject, such as <i>Battery (BATT)</i>, <i>Failsafes (FS)</i>, <i>Servo / motor outputs (SERVO)</i> and <i>EKF3 (EK3)</i>, without knowing the exact name. Small groups are under <i>Other</i>.</li>
+  <li><b>Search</b>: type part of the name or of the description, such as <code>rtl alt</code> or <code>battery capacity</code>. Searching always looks at every parameter.</li>
+  <li><b>Filter</b>: All, Changed (not yet written), Standard or Advanced.</li>
+  <li><b>Hover</b> over any row to see what it does.</li>
+</ul>
+<h2>Changing parameters</h2>
+<ol class="steps">
+  <li>Select a parameter. The editor on the right shows its description, units, range and a control: a dropdown for named values, switches for bitmasks, or a number field.</li>
+  <li>Press <b>Keep change</b> to collect it (changed values are highlighted), or <b>Write now</b> to send it straight away.</li>
+  <li>Press <b>Write changes</b> at the top to send everything you collected. If any parameter needs a reboot, MPXAir offers to do it.</li>
+</ol>
+<h2>Files</h2>
+<ul>
+  <li><b>Save…</b> writes every parameter to a <code>.param</code> file (Mission Planner format).</li>
+  <li><b>Load…</b> reads a Mission Planner, MAVProxy or QGroundControl file. It compares it with the aircraft and <b>stages only the differences</b> for you to review. Calibration and counter values are never overwritten.</li>
+</ul>
+<h2>Descriptions</h2>
+<p>MPXAir ships descriptions for every ArduPilot parameter. Newer firmware adds parameters. <b>Preferences → Telemetry → Update</b> downloads ArduPilot's latest descriptions.</p>

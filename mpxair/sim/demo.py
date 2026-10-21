@@ -236,6 +236,7 @@ class DemoServer:
         self.sim = DemoCopter(lat, lon)
         self.enc = Encoder(1, 1)
         self.enc_radio = Encoder(51, 68)      # SiK radio status has its own sequence numbers
+        self.enc_ground = Encoder(255, 190)   # a ground unit's own GPS messages
         self.sock = None
         self.client = None
         self.parser = Parser()
@@ -245,6 +246,9 @@ class DemoServer:
         self.gcs_board = True         # answers "#GCS status" like the RFD/ESP32 board
         self.board_follow = False
         self.vehicle_off = False      # True: only the ground board answers (aircraft powered off)
+        self.json_board = True        # answers "#GND?" with "#GND {json}" (custom JSON board example)
+        self.csv_board = False        # sends "$GND,lat,lon,alt,sats,fix" every second
+        self.mavlink_ground = False   # sends GPS_RAW_INT as system 255 (a ground unit's own GPS)
 
     def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -269,7 +273,7 @@ class DemoServer:
         c = self.client
         if not c:
             return
-        enc = self.enc_radio if kw.get("_sysid") == 51 else self.enc
+        enc = {51: self.enc_radio, 255: self.enc_ground}.get(kw.get("_sysid"), self.enc)
         try:
             with self.lock:
                 c.sendall(enc.encode(name, **kw))
@@ -299,6 +303,8 @@ class DemoServer:
                 break
             if self.gcs_board and b"#GCS" in data:
                 self._gcs_commands(data)
+            if self.json_board and b"#GND?" in data:
+                self._raw_line("#GND " + __import__("json").dumps(self._ground_fix_dict()))
             for m in self.parser.feed(data):
                 try:
                     self.handle(m)
@@ -392,6 +398,14 @@ class DemoServer:
             self.send("WIND", direction=230, speed=3.2, speed_z=0)
             if self.ground_gps:
                 self._send_ground_gps()
+            if self.csv_board:
+                f = self._ground_fix_dict()
+                self._raw_line(f"$GND,{f['lat']:.7f},{f['lon']:.7f},{f['alt']:.1f},{f['sats']},{f['fix']}")
+            if self.mavlink_ground:
+                f = self._ground_fix_dict()
+                self.send("GPS_RAW_INT", time_usec=0, fix_type=3, lat=int(f["lat"] * 1e7), lon=int(f["lon"] * 1e7),
+                          alt=int(f["alt"] * 1000), eph=90, epv=120, vel=0, cog=0, satellites_visible=f["sats"],
+                          _sysid=255, _compid=190)
         while sim.texts:
             sev, text = sim.texts.pop(0)
             self.send("STATUSTEXT", severity=sev, text=text)
@@ -425,6 +439,19 @@ class DemoServer:
                         c.sendall(b"#GCS " + json.dumps(reply).encode() + b"\n")
                 except OSError:
                     self.client = None
+
+    def _ground_fix_dict(self):
+        lat, lon = _offset(self.sim.home[0], self.sim.home[1], -30, 25)
+        return {"lat": lat, "lon": lon, "alt": self.sim.home[2], "sats": 10, "fix": 3}
+
+    def _raw_line(self, text):
+        c = self.client
+        if c:
+            try:
+                with self.lock:
+                    c.sendall(text.encode() + b"\r\n")
+            except OSError:
+                self.client = None
 
     def _send_ground_gps(self):
         """Pretend the ground radio board has a GPS: NMEA GGA lines mixed into the stream."""

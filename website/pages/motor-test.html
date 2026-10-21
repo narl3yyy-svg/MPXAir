@@ -1,0 +1,25 @@
+<!--
+title: Motor test
+section: Using MPXAir
+order: 6
+nav: Setup · Motor test
+lead: Check every motor is on the right output and spins the right way, using a diagram of your actual frame.
+-->
+<div class="callout danger"><b>Remove the propellers</b><p>Always take the propellers off before testing motors.</p></div>
+<figure><img src="assets/img/motor-test.jpg" alt="Motor test diagram"><figcaption>Quad Plus: big numbers are outputs, letters are test buttons, and arrows show the spin direction.</figcaption></figure>
+<h2>Reading the diagram</h2>
+<ul>
+  <li>The front of the vehicle is at the top (yellow arrow).</li>
+  <li>The <b>big number</b> is the output (servo) the motor must be plugged into.</li>
+  <li>The <b>letter</b> is the motor-test button. Letters go clockwise from the front.</li>
+  <li>The <b>arrow</b> shows the spin direction looking from above: green is clockwise, blue is counter-clockwise.</li>
+  <li>The diagram comes from ArduPilot's motor layout data for your <code>FRAME_CLASS</code> and <code>FRAME_TYPE</code>. Coaxial frames (Y6, OctaQuad) show the top and bottom motors side by side.</li>
+</ul>
+<figure><img src="assets/img/motor-y6.jpg" alt="Y6 layout"><figcaption>A coaxial Y6 frame.</figcaption></figure>
+<h2>Testing</h2>
+<ol class="steps">
+  <li>Set the throttle (about 5–10 %) and duration.</li>
+  <li>Press a letter. That motor lights up in the diagram and should spin.</li>
+  <li>If a <b>different</b> motor spins, its wire is on the wrong output. If it spins the <b>wrong way</b>, swap any two of its three motor wires (or reverse it in the ESC settings).</li>
+</ol>
+<p><b>Test all in sequence</b> spins each motor in turn. <b>Stop all</b> stops at once.</p>

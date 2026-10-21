@@ -1,0 +1,51 @@
+<!--
+title: Installing and running
+section: Getting started
+order: 2
+nav: Install
+lead: Run MPXAir straight from its folder, or install it so it appears in Ubuntu's app grid.
+-->
+<h2>Requirements</h2>
+<ul>
+  <li>Ubuntu 24.04 or newer. It is developed and tested on Ubuntu 25.10. Other Linux desktops with GTK 4.12+ and libadwaita 1.4+ also work.</li>
+  <li>Python 3.10 or newer and these Ubuntu packages, which a standard Ubuntu desktop normally already has:
+    <code>python3-gi</code>, <code>python3-cairo</code>, <code>gir1.2-gtk-4.0</code>, <code>gir1.2-adw-1</code>.</li>
+  <li>Optional: <code>gir1.2-geoclue-2.0</code>, to use the computer's location service as the ground position.</li>
+</ul>
+
+<h2>Get MPXAir</h2>
+<pre><code>git clone https://github.com/narl3yyy-svg/MPXAir.git
+cd MPXAir</code></pre>
+<p>Or download the ZIP from the GitHub page (<b>Code → Download ZIP</b>) and unpack it.</p>
+
+<h2>Run it without installing</h2>
+<pre><code>./run.sh</code></pre>
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td><code>./run.sh</code></td><td>Start MPXAir. Settings go in <code>~/.config/mpxair</code>, missions and logs in <code>~/Documents/MPXAir</code>.</td></tr>
+  <tr><td><code>./run.sh --portable</code></td><td>Keep settings, map cache and logs inside the folder (<code>userdata/</code>). Good for a USB stick you carry between computers.</td></tr>
+  <tr><td><code>./run.sh --demo</code></td><td>Run only the demo drone in the terminal (<code>tcp:127.0.0.1:5790</code>). Useful for testing other ground stations.</td></tr>
+</table>
+<p>If something is missing, <code>run.sh</code> says exactly which packages to install.</p>
+
+<h2>Install it</h2>
+<pre><code>./install.sh</code></pre>
+<ol class="steps">
+  <li>It checks the Ubuntu packages and offers to install any that are missing with <code>apt</code>. Only then does it ask for your password.</li>
+  <li>It copies MPXAir to <code>~/.local/share/mpxair</code>.</li>
+  <li>It adds an <b>MPXAir</b> launcher to the app grid and an <code>mpxair</code> terminal command.</li>
+  <li>It offers to add you to the <code>dialout</code> group, which is needed for USB flight controllers and radios. Log out and back in afterwards.</li>
+</ol>
+<p>To install for every user on the computer, use <code>./install.sh --system</code>, which installs to <code>/opt/mpxair</code>.</p>
+
+<h2>Update</h2>
+<pre><code>cd MPXAir
+git pull
+./install.sh</code></pre>
+<p>Your settings, maps and logs are kept.</p>
+
+<h2>Uninstall</h2>
+<pre><code>./uninstall.sh</code></pre>
+<p>Use <code>./uninstall.sh --system</code> for a system-wide install. Your settings (<code>~/.config/mpxair</code>), map cache (<code>~/.cache/mpxair</code>) and logs (<code>~/Documents/MPXAir</code>) are left in place.</p>
+
+<div class="callout warn"><b>USB access</b><p>If MPXAir says <i>Permission denied</i> when opening a USB port, run <code>sudo usermod -aG dialout $USER</code>, then log out and back in.</p></div>

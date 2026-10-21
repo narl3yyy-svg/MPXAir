@@ -1,0 +1,25 @@
+<!--
+title: Antenna tracker
+section: Ground station
+order: 4
+lead: Point a pan/tilt antenna at the aircraft automatically.
+-->
+<h2>What you need</h2>
+<ul>
+  <li>A pan/tilt mount with two servos, driven by a <b>Pololu Maestro</b> servo controller or a serial pan/tilt board.</li>
+  <li>A ground position. The tracker's position is the ground position, so use the ground station's GPS or type in a fixed position.</li>
+</ul>
+<h2>Set it up</h2>
+<ol class="steps">
+  <li>On <b>Ground → Antenna tracker</b>, choose the hardware:
+    <ul>
+      <li><i>Pololu Maestro</i>;</li>
+      <li><i>Serial pan/tilt (PWM)</i>: the board receives <code>!!!PAN:xxxx,TLT:xxxx</code> lines in microseconds;</li>
+      <li><i>Serial pan/tilt (degrees×10)</i>.</li>
+    </ul></li>
+  <li>Choose the serial port and baud rate, and the pan and tilt channels.</li>
+  <li>Set the PWM minimum and maximum, the angle range each servo covers, and the trims. Reverse either servo if it moves the wrong way.</li>
+  <li>Press <b>Point north, level</b> and check the antenna points north and level. Adjust the trims if not.</li>
+  <li>Press <b>Start tracking</b>.</li>
+</ol>
+<p>The status line shows the aircraft's bearing, elevation and distance from the tracker. Mounts with more than 120° of tilt flip over the top instead of spinning all the way round.</p>

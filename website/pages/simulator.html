@@ -1,0 +1,21 @@
+<!--
+title: Testing with the ArduPilot simulator
+section: Hardware and integration
+order: 3
+nav: ArduPilot simulator
+lead: Fly a real ArduPilot copter, plane or rover on your computer to practise and test.
+-->
+<h2>Build SITL</h2>
+<p>Follow ArduPilot's <a href="https://ardupilot.org/dev/docs/building-setup-linux.html">Linux build guide</a>, then build the vehicle you want:</p>
+<pre><code>cd ardupilot
+./waf configure --board sitl
+./waf copter</code></pre>
+<h2>Run it</h2>
+<pre><code>./build/sitl/bin/arducopter --model quad --home -35.363261,149.165230,584,353 --defaults Tools/autotest/default_params/copter.parm -I0</code></pre>
+<p>In MPXAir choose <b>TCP</b>, enter <code>127.0.0.1:5760</code> and press <b>Connect</b>.</p>
+<h2>What to try</h2>
+<ul>
+  <li>Wait for <i>GPS: 3D Fix</i> (bottom-left of the map), then use <b>Takeoff</b> and <b>Fly to here</b>.</li>
+  <li>Write a mission on <b>Plan</b> and press <b>Start Mission</b>.</li>
+  <li>After landing, download and graph the log on <b>Logs</b>.</li>
+</ul>

@@ -1,0 +1,23 @@
+<!--
+title: Follow Me
+section: Ground station
+order: 3
+lead: Make the aircraft follow the ground station — either driven by MPXAir, or by the ground station board itself.
+-->
+<h2>Follow Me from MPXAir</h2>
+<p>MPXAir sends the aircraft a new GUIDED target at your ground position, several times a second.</p>
+<ol class="steps">
+  <li>Choose a <b>moving</b> ground position source: a ground station board, a USB GPS, or the computer's location. A fixed position won't work.</li>
+  <li>On <b>Ground → Follow Me</b>, set the <b>altitude above home</b>, how far away to stay (0 = overhead), and how many updates per second.</li>
+  <li>Press <b>Start Follow Me</b> and confirm. The aircraft switches to GUIDED and flies towards you.</li>
+</ol>
+<p>Follow Me pauses if the aircraft leaves GUIDED, so switching mode on your transmitter always takes back control. The status line shows what it's doing.</p>
+
+<h2>ArduPilot Follow mode (board broadcast)</h2>
+<p>Ground station boards that can broadcast their own position (like the <a href="rfd900-esp32.html">RFD900 + ESP32</a>) can drive ArduPilot's built-in <b>FOLLOW</b> mode instead:</p>
+<ol class="steps">
+  <li>On the aircraft, set <code>FOLL_ENABLE = 1</code> and <code>FOLL_SYSID = 255</code> (Parameters tab, group <i>Follow mode (FOLL)</i>).</li>
+  <li>On <b>Ground → Ground station type</b>, turn on <b>Ground station sends its position to the aircraft</b>.</li>
+  <li>Switch the aircraft to FOLLOW mode.</li>
+</ol>
+<div class="callout warn"><b>Safety</b><p>Test Follow Me with plenty of space and a safe altitude, and keep your transmitter in hand.</p></div>

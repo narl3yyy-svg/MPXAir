@@ -244,6 +244,10 @@ def readable(row):
                                                              margin_top=2, margin_bottom=2)))
     lf.connect("bind", lambda f, it: it.get_child().set_text(it.get_item().get_string()))
     row.set_list_factory(lf)
+    # refresh the shown value now that the expression is set (selection 0 wouldn't notify)
+    sel = row.get_selected()
+    row.set_selected(Gtk.INVALID_LIST_POSITION)
+    row.set_selected(sel)
     return row
 
 

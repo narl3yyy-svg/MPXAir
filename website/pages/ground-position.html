@@ -1,0 +1,26 @@
+<!--
+title: Ground position
+section: Ground station
+order: 1
+lead: Tell MPXAir where you and your antenna are. It's used for the GROUND marker, distances, Follow Me and antenna tracking.
+-->
+<h2>Where the position comes from</h2>
+<p>On the <b>Ground</b> tab, choose one of:</p>
+<table>
+  <tr><th>Source</th><th>Use it when</th></tr>
+  <tr><td><b>A ground station on the telemetry link</b></td><td>Your ground station has its own GPS and shares the USB/serial connection with the aircraft, for example an <a href="rfd900-esp32.html">RFD900 + ESP32 board</a>. Then choose its <a href="ground-station-types.html">type</a>.</td></tr>
+  <tr><td>Separate USB GPS receiver</td><td>A GPS plugged in on its own port, sending NMEA. Choose the port and baud rate.</td></tr>
+  <tr><td>This computer's location</td><td>Ubuntu's location service (Wi-Fi or a built-in GPS). Turn on Location in Ubuntu's Settings → Privacy.</td></tr>
+  <tr><td>A fixed position you type in</td><td>A ground station that doesn't move. <b>Use the vehicle's home</b> fills it in for you.</td></tr>
+  <tr><td>Not used</td><td>MPXAir doesn't need to know where you are.</td></tr>
+</table>
+<p>The <b>Status</b> row shows the position and how it is being read. The choice takes effect straight away. Press <b>Apply</b> after editing a port or coordinates.</p>
+
+<h2>Seeing it in MPXAir</h2>
+<ul>
+  <li><b>Fly map</b>: the blue <b>GROUND</b> badge with its satellite count, and a dashed line to the aircraft with the distance. <i>Keep both in view</i> frames them together.</li>
+  <li><b>GND GPS chip</b> (top of the Fly map): satellites and distance to the aircraft.</li>
+  <li><b>Quick view</b>: <i>Distance / Bearing / Elevation from ground</i> and <i>Ground GPS satellites</i>.</li>
+  <li><b>Status → Ground status</b>: position, source, and the aircraft's distance, bearing and elevation from you.</li>
+</ul>
+<div class="callout tip"><b>Automatic</b><p>When MPXAir finds an RFD900 + ESP32 board on the connection, it switches the ground position to that board's GPS for you.</p></div>

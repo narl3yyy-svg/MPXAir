@@ -834,7 +834,7 @@ class FlyPage(Gtk.Box):
             self.chip_gnd.set_text(txt)
             self.chip_gnd.set_css_classes(["chip", "info"])
         else:
-            waiting = g.source in ("esp32", "link") and not self.v.is_open
+            waiting = g.source == "board" and not self.v.is_open
             self.chip_gnd.set_text("GND GPS · not connected" if waiting else "GND GPS · no fix")
             self.chip_gnd.set_css_classes(["chip", "warn"])
         self.chip_gnd.set_tooltip_text(g.status)

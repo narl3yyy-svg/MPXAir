@@ -2,6 +2,23 @@
 
 All notable changes to MPXAir are listed here.
 
+## 1.2.0 — 2026-10-21
+
+### Added
+- **Ground station types** on the Ground tab, for any ground station with a GPS on the telemetry serial link:
+  - RFD900 + ESP32 board;
+  - GPS mixed into the telemetry (NMEA or MAVLink);
+  - MAVLink GPS from the ground station, with a system ID filter;
+  - custom boards with JSON replies (configurable poll command, prefix, field paths and scales);
+  - custom boards with comma-separated replies (configurable columns).
+- Each type has its own saved settings, **Reset**, **Test now**, and the last message received.
+- **Documentation website** at https://narl3yyy-svg.github.io/MPXAir/: 24 pages with search, light and dark
+  themes, and example ground-station firmware. Opened from the main menu (**Manual**, <kbd>F1</kbd>) and from the Ground tab.
+- The demo drone also simulates JSON, comma-separated and MAVLink ground stations.
+
+### Changed
+- Older ground-position settings ("esp32", "link") are migrated to the new ground station types automatically.
+
 ## 1.1.0 — 2026-10-21
 
 ### Added

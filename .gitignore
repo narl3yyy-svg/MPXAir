@@ -7,3 +7,4 @@ userdata/
 .venv/
 .vscode/
 .idea/
+website/_site/

@@ -1,0 +1,46 @@
+<!--
+title: Connecting to your aircraft
+section: Connecting
+order: 1
+nav: Connecting
+lead: USB, telemetry radios, UDP and TCP — and what the connection window tells you.
+-->
+<h2>Choose a connection</h2>
+<p>The connection controls are at the top right of the window: the connection list, a refresh button, the
+baud rate or address, and <b>Connect</b>.</p>
+<table>
+  <tr><th>Connection</th><th>Use it for</th><th>Settings</th></tr>
+  <tr><td><code>ACM0 · …</code>, <code>USB0 · …</code></td><td>A flight controller on USB, a telemetry radio, or a ground station board</td><td>Baud rate: <b>115200</b> for USB flight controllers, usually <b>57600</b> for radios</td></tr>
+  <tr><td>UDP listen</td><td>Wi-Fi telemetry, companion computers, other software forwarding MAVLink</td><td>Port, usually <code>14550</code></td></tr>
+  <tr><td>TCP</td><td>The ArduPilot simulator, network bridges</td><td><code>host:port</code>, e.g. <code>127.0.0.1:5760</code></td></tr>
+  <tr><td>UDP send</td><td>Sending to a fixed address</td><td><code>host:port</code></td></tr>
+  <tr><td>Demo drone</td><td>Trying MPXAir without hardware</td><td>—</td></tr>
+</table>
+<p>USB devices are listed with a short name, for example <code>ACM0 · Espressif</code>. Open the list to see the full name.
+New devices are noticed as soon as they're plugged in.</p>
+
+<h2>The connection window</h2>
+<p>When you press <b>Connect</b>, a window shows each step, like Mission Planner's:</p>
+<ol>
+  <li><b>Opened</b> the port or address.</li>
+  <li><b>Heartbeat received</b> from the aircraft, with its type and system ID. This is the proof the air unit is talking to you.</li>
+  <li><b>Parameters</b> counting up, for example <i>812 / 1431</i>.</li>
+  <li><b>Mission</b>, <b>Geofence</b> and <b>Rally points</b> read from the aircraft.</li>
+</ol>
+<p>It closes on its own a couple of seconds after everything has loaded. Press <b>Hide</b> to close it early (loading carries on), or <b>Cancel</b> while it is still waiting for the heartbeat.</p>
+<figure><img src="assets/img/connect-progress.jpg" alt="Connection window"><figcaption>Heartbeat received and all 1431 parameters loaded.</figcaption></figure>
+
+<h2>Ground station only (aircraft off)</h2>
+<p>If you connect to a ground station board (for example the <a href="rfd900-esp32.html">RFD900 + ESP32 board</a>) while the aircraft is switched off, MPXAir keeps the link open and says <i>Waiting for aircraft</i>.
+The ground station's GPS is shown straight away. When the aircraft powers up, MPXAir connects to it and loads its parameters automatically.</p>
+
+<h2>Telemetry recording</h2>
+<p>Everything received while connected is saved to a telemetry log (<code>.tlog</code>) in
+<code>~/Documents/MPXAir/telemetry-logs</code>. You can <a href="logs.html#replay-a-flight">replay it</a> later. Turn this off in Preferences → General.</p>
+
+<h2>If it doesn't connect</h2>
+<ul>
+  <li><b>No heartbeat within 30 seconds.</b> Check that the aircraft is powered, that the right port is selected, and that the baud rate matches the radio (57600 for most SiK/RFD radios).</li>
+  <li><b>Permission denied.</b> Add yourself to the <code>dialout</code> group (see <a href="troubleshooting.html">Troubleshooting</a>).</li>
+  <li><b>The port isn't in the list.</b> See <a href="troubleshooting.html#a-usb-device-disappears">a USB device disappears</a>.</li>
+</ul>

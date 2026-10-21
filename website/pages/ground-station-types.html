@@ -1,0 +1,40 @@
+<!--
+title: Ground station types
+section: Ground station
+order: 2
+lead: MPXAir can read the GPS of different ground stations that share the telemetry link. Pick yours and adjust its settings.
+-->
+<figure><img src="assets/img/ground-types.jpg" alt="Ground station type and settings"><figcaption>Ground → Ground station type, with the board's details, the last message received, and the settings for this type.</figcaption></figure>
+
+<h2>Choosing a type</h2>
+<p>Select <b>A ground station on the telemetry link</b> as the ground position, then pick a <b>Type</b>:</p>
+<table>
+  <tr><th>Type</th><th>How the GPS arrives</th></tr>
+  <tr><td><b>RFD900 + ESP32 ground station board</b></td><td>MPXAir sends <code>#GCS status</code> once a second. The board replies with a <code>#GCS {json}</code> line that includes its GPS. See <a href="rfd900-esp32.html">RFD900 + ESP32</a>.</td></tr>
+  <tr><td><b>GPS mixed into the telemetry</b></td><td>The ground station already sends NMEA sentences (<code>$GPGGA</code>, <code>$GNRMC</code>…) or MAVLink GPS messages on the link. Nothing is sent to it.</td></tr>
+  <tr><td><b>MAVLink GPS from the ground station</b></td><td>The ground station sends <code>GPS_RAW_INT</code>, <code>GLOBAL_POSITION_INT</code> or <code>GPS_INPUT</code> with its own system ID (255 by default).</td></tr>
+  <tr><td><b>Custom board — JSON replies</b></td><td>Your own firmware answers a text command with a JSON line, e.g. <code>#GND {"lat":-35.36,"lon":149.16,"alt":584,"sats":11,"fix":3}</code>.</td></tr>
+  <tr><td><b>Custom board — comma-separated replies</b></td><td>Your firmware sends lines such as <code>$GND,-35.363261,149.165230,584.0,11,3</code>, on request or by itself.</td></tr>
+</table>
+<p>Building your own? See <a href="custom-ground-station.html">Connect your own ground station</a>.</p>
+
+<h2>The settings for each type</h2>
+<p>Each type has its own settings, saved separately, so switching types never loses them. Change a value and press <b>Save</b>.
+<b>Reset</b> puts the defaults back. <b>Test now</b> sends the poll command once, and the reply appears under <i>Last message from the ground station</i>, which is the quickest way to check a new board.</p>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Poll command</td><td>Text sent to ask for the status, e.g. <code>#GCS status</code>. Leave empty if the board sends its position by itself.</td></tr>
+  <tr><td>Start command</td><td>Sent once when the link opens (optional), e.g. <code>#GCS hello</code>.</td></tr>
+  <tr><td>Reply prefix</td><td>Replies start with this text, e.g. <code>#GCS </code> or <code>$GND,</code>. Everything after it is the data.</td></tr>
+  <tr><td>Line ending</td><td>Added after each command: <code>\r</code>, <code>\n</code> or <code>\r\n</code>.</td></tr>
+  <tr><td>Poll every (seconds)</td><td>How often the poll command is sent.</td></tr>
+  <tr><td>Latitude / Longitude field</td><td>For JSON, a path such as <code>gps.lat</code>. For comma-separated, the column number (the first value after the prefix is 1).</td></tr>
+  <tr><td>Position scale</td><td><code>0.0000001</code> when the board sends degrees × 10⁷, <code>1</code> for plain degrees.</td></tr>
+  <tr><td>Altitude field / scale</td><td>Altitude above sea level. Use scale <code>0.001</code> for millimetres, <code>1</code> for metres.</td></tr>
+  <tr><td>Satellites, Fix, HDOP fields</td><td>Optional. <i>Fix</i> can be true/false, or a number where 0 means no fix.</td></tr>
+  <tr><td>Board name / Firmware field</td><td>Optional, shown on the Ground tab.</td></tr>
+  <tr><td>Only use replies that contain</td><td>Ignore replies without this field (e.g. answers to other commands).</td></tr>
+  <tr><td>Follow commands</td><td>Optional commands that make the board broadcast its position to the aircraft. They switch on the <i>Ground station sends its position to the aircraft</i> switch.</td></tr>
+  <tr><td>System ID (MAVLink types)</td><td>Only use GPS messages from this MAVLink system. 0 = any system that isn't the aircraft.</td></tr>
+  <tr><td>Release DTR and RTS</td><td>Turn the serial control lines off when connecting. ESP32 boards need this or they may reset.</td></tr>
+</table>
