@@ -5,6 +5,12 @@ order: 3
 nav: What's new
 lead: Changes in each version of MPXAir.
 -->
+<h2>1.2.3</h2>
+<ul>
+  <li><b>Disconnect</b> asks for confirmation (with a stronger warning if the aircraft is armed), then closes the serial port completely and confirms it is free for other programs.</li>
+  <li>While connected, MPXAir has the port to itself, so other programs get a clear "busy" error. If another program already has the port open, MPXAir names it.</li>
+  <li><b>Fixed:</b> the heartbeat could be written while the port was closing.</li>
+</ul>
 <h2>1.2.2</h2>
 <ul>
   <li><b>Fixed:</b> the firmware version was sometimes never learned on a busy radio link, so matching parameter descriptions weren't used. It's now requested until it arrives, and read from the startup banner as a fallback.</li>

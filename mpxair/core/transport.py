@@ -51,6 +51,28 @@ def usb_ids(device):
     return None, None
 
 
+def port_users(device):
+    """This user's programs that have `device` open, e.g. ['chrome [1234]']."""
+    real = os.path.realpath(device)
+    out = []
+    for pid in os.listdir("/proc"):
+        if not pid.isdigit():
+            continue
+        try:
+            fds = os.listdir(f"/proc/{pid}/fd")
+        except OSError:
+            continue
+        for fd in fds:
+            try:
+                if os.readlink(f"/proc/{pid}/fd/{fd}") == real:
+                    with open(f"/proc/{pid}/comm") as fh:
+                        out.append(f"{fh.read().strip()} [{pid}]")
+                    break
+            except OSError:
+                continue
+    return out
+
+
 def is_espressif(device):
     return usb_ids(device)[0] == "303a"
 
@@ -66,6 +88,7 @@ class SerialTransport:
         self.device = device
         self.baud = baud
         self.name = f"{device} @ {baud}"
+        self.fd = -1
         try:
             self.fd = os.open(device, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
         except PermissionError:
@@ -73,7 +96,23 @@ class SerialTransport:
                 f"Permission denied opening {device}. Your user needs to be in the "
                 "'dialout' group (the installer can set this up), then log out and back in.")
         except OSError as e:
+            if e.errno == 16:      # EBUSY: another program has it open exclusively
+                users = port_users(device)
+                who = f" ({', '.join(users)})" if users else ""
+                raise TransportError(
+                    f"{device} is in use by another program{who}. Close or disconnect it there first "
+                    "(for example the GCS Settings page in Chrome, Mission Planner or MAVProxy).")
             raise TransportError(f"Could not open {device}: {e.strerror}")
+        others = [u for u in port_users(device) if not u.endswith(f"[{os.getpid()}]")]
+        if others:
+            os.close(self.fd)
+            self.fd = -1
+            raise TransportError(
+                f"{device} is already open in {', '.join(others)}. Two programs can't share a serial "
+                "port: close or disconnect it there first.")
+        # exclusive while MPXAir has it: other programs get a clear "busy" error instead of
+        # silently stealing bytes from the link. Released when the port is closed.
+        self._ioctl(0x540C)        # TIOCEXCL
         self._configure(baud)
         self.espressif = is_espressif(device)
         if self.espressif:
@@ -149,11 +188,22 @@ class SerialTransport:
             except OSError as e:
                 raise TransportError(f"Serial port error: {e.strerror}")
 
+    def _ioctl(self, req):
+        import fcntl
+        try:
+            fcntl.ioctl(self.fd, req)
+        except OSError:
+            pass
+
     def close(self):
+        if self.fd < 0:
+            return
+        self._ioctl(0x540D)        # TIOCNXCL: give up exclusive use
         try:
             os.close(self.fd)
         except OSError:
             pass
+        self.fd = -1               # never touch a file number Linux may hand out again
 
 
 class UdpServerTransport:

@@ -34,10 +34,18 @@ New devices are noticed as soon as they're plugged in.</p>
 <p>If you connect to a ground station board (for example the <a href="rfd900-esp32.html">RFD900 + ESP32 board</a>) while the aircraft is switched off, MPXAir keeps the link open and says <i>Waiting for aircraft</i>.
 The ground station's GPS is shown straight away. When the aircraft powers up, MPXAir connects to it and loads its parameters automatically.</p>
 
+<h2>Disconnecting</h2>
+<p>Press <b>Disconnect</b> (top right). A window asks you to confirm, because you'll lose telemetry and control of the aircraft from MPXAir.
+If the aircraft is <b>armed</b>, the warning says so, and reminds you that its ground-station failsafe may trigger.</p>
+<p>After you confirm, MPXAir closes the port completely, stops Follow Me and any automatic reconnect, and confirms
+<i>Disconnected — /dev/ttyACM1 is free for other programs</i>. You can then open the port in another program, such as the GCS Settings page or Mission Planner.</p>
+<div class="callout"><b>One program at a time</b><p>While MPXAir is connected it has the serial port to itself, and other programs get a "busy" error.
+If another program already has the port open when you press Connect, MPXAir tells you which one.</p></div>
+
 <h2>Automatic reconnect</h2>
 <p>If a USB device drops off (unplugged, or a power dip on the board), MPXAir shows <i>Reconnecting…</i> and waits up to two minutes.
 It recognises the same device by its unique USB ID, even if it comes back under a new name (for example <code>ttyACM1</code> instead of <code>ttyACM0</code>),
-then reconnects and reloads everything. Press <b>Stop</b> to give up.</p>
+then reconnects and reloads everything. Press <b>Stop</b> to give up. It never reconnects after you press <b>Disconnect</b> yourself.</p>
 
 <h2>Telemetry recording</h2>
 <p>Everything received while connected is saved to a telemetry log (<code>.tlog</code>) in

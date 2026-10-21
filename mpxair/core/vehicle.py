@@ -254,16 +254,19 @@ class Vehicle:
         return False
 
     def disconnect(self):
+        """Stop the link threads and close the port completely."""
         was = self._running
         self._running = False
-        if self._thread and self._thread is not threading.current_thread():
-            self._thread.join(timeout=1.5)
-        if self.transport:
-            try:
-                self.transport.close()
-            except Exception:
-                pass
-        self.transport = None
+        for th in (self._thread, self._hb_thread):
+            if th and th is not threading.current_thread():
+                th.join(timeout=2.0)
+        with self._wlock:              # no heartbeat can be half-way through a write
+            t, self.transport = self.transport, None
+            if t:
+                try:
+                    t.close()
+                except Exception:
+                    pass
         if self.tlog:
             try:
                 self.tlog.close()

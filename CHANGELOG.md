@@ -2,6 +2,18 @@
 
 All notable changes to MPXAir are listed here.
 
+## 1.2.3 — 2026-10-21
+
+### Changed
+- **Disconnect** asks for confirmation (you lose telemetry and control; a stronger warning when the aircraft is
+  armed). It then stops Follow Me and any automatic reconnect, closes the serial port completely, checks that
+  nothing in MPXAir still holds it, and confirms the port is free for other programs.
+- Serial ports are opened for exclusive use (TIOCEXCL) and released on close. If another program already has the
+  port open, MPXAir names it instead of sharing the port.
+
+### Fixed
+- Disconnect closed the port without waiting for the heartbeat thread, which could write during the close.
+
 ## 1.2.2 — 2026-10-21
 
 Found during a live check with an RFD900 + ESP32 ground station and an ArduCopter 4.7.1 aircraft.

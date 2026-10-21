@@ -200,8 +200,7 @@ class ConnectBar(Gtk.Box):
                 self.cancel.set()
             return
         if self.v.is_open:
-            self.shared.follow.stop()
-            self.v.disconnect()
+            self._confirm_disconnect()
             return
         try:
             spec = self._spec()
@@ -209,6 +208,62 @@ class ConnectBar(Gtk.Box):
             alert(self.get_root(), "Can't connect", str(e))
             return
         self._connect(spec)
+
+    def _confirm_disconnect(self):
+        tr = self.v.transport
+        if getattr(tr, "kind", "") == "tlog":
+            self.disconnect_fully()            # just a replay: nothing to lose
+            return
+        st = self.v.state
+        port = getattr(tr, "device", None) or getattr(tr, "name", "the link")
+        if st.connected and st.armed:
+            heading = "Disconnect while the aircraft is ARMED?"
+            body = ("You will lose telemetry and all control of the aircraft from MPXAir. "
+                    "It will carry on by itself, and may trigger its ground-station failsafe "
+                    "(for example RTL or Land, depending on FS_GCS_ENABLE).\n\n"
+                    f"{port} will be released so other programs can use it.")
+        elif st.connected:
+            heading = "Disconnect from the aircraft?"
+            body = ("MPXAir will stop receiving telemetry. You won't see the aircraft, its GPS or "
+                    "its messages, and can't control it from MPXAir until you connect again.\n\n"
+                    f"{port} will be released completely so other programs (for example the GCS "
+                    "Settings page or Mission Planner) can use it.")
+        else:
+            heading = "Disconnect?"
+            body = (f"MPXAir will close {port} completely so other programs can use it.")
+        alert(self.get_root(), heading, body, (("cancel", "Stay connected"), ("disconnect", "Disconnect")),
+              default="cancel", destructive="disconnect",
+              on_response=lambda r: self.disconnect_fully() if r == "disconnect" else None)
+
+    def disconnect_fully(self):
+        """Disconnect and make sure nothing in MPXAir keeps using the port."""
+        port = getattr(self.v.transport, "device", None)
+        self.reconnecting = False                  # no automatic reconnect after a deliberate disconnect
+        self.waiting_for_aircraft = False
+        self.shared.follow.stop()
+        if self.cancel:
+            self.cancel.set()
+        self.v.disconnect()
+        if not port:
+            toast("Disconnected")
+            return
+        import os
+        from ..core.transport import port_users
+        mine = [u for u in port_users(port) if u.endswith(f"[{os.getpid()}]")]
+        if mine:
+            # belt and braces: close any file handle on the port that is still open in this program
+            real = os.path.realpath(port)
+            for fd in os.listdir("/proc/self/fd"):
+                try:
+                    if os.readlink(f"/proc/self/fd/{fd}") == real:
+                        os.close(int(fd))
+                except OSError:
+                    pass
+        others = [u for u in port_users(port) if not u.endswith(f"[{os.getpid()}]")]
+        msg = f"Disconnected — {port} is free for other programs"
+        if others:
+            msg = f"Disconnected. {port} is now open in {', '.join(others)}"
+        toast(msg, 5)
 
     def debug_connect(self, kind):
         for i, c in enumerate(self.choices):
