@@ -120,7 +120,7 @@ New USB devices are noticed as soon as they're plugged in. Every session is reco
   - arm and disarm (with force when needed), takeoff, mode buttons, any flight mode;
   - set the current waypoint, start or restart the mission, change speed and altitude;
   - calibrate the gyro or barometer, reboot, trigger the camera.
-- **Quick view**: 2 to 16 tiles. Add a tile with **Add a tile**. Click a tile to choose from more than 45
+- **Quick view**: 2 to 16 tiles. Add a tile with **Add a tile**. Click a tile to choose from 45
   values in sections (height, speed and attitude, navigation, battery, GPS and health, telemetry link,
   ground station), or to remove it.
 - **GPS status at the bottom-left of the map**, like Mission Planner: fix type, satellites and HDOP,

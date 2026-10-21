@@ -8,7 +8,7 @@ All notable changes to MPXAir are listed here.
 - **Connection progress window**, as in Mission Planner: link, heartbeat, parameters counting up, then
   mission, geofence and rally points. It closes on its own when done.
 - **Plan Read and Write progress windows**: item-by-item progress and what the aircraft confirmed.
-- **Quick view**: add or remove tiles (2–16), and more than 45 values in sections.
+- **Quick view**: add or remove tiles (2–16), and 45 values in sections.
 - **Parameters groups sidebar** with friendly names.
 - **Hover descriptions** for parameters and settings: Setup forms, the Parameters list, mission item
   fields and Preferences.
