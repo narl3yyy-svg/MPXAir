@@ -398,13 +398,20 @@ class GroundLayer:
                 mx, my = x + (vx - x) * 0.4 + nx * 12, y + (vy - y) * 0.4 + ny * 12
                 outline_text(cr, mx, my, txt, (0.7, 0.92, 1.0), size=11, center=True)
         draw_ground_station(cr, x, y, live)
+        # when the aircraft is right next to the ground station, put this label above the
+        # badge so it doesn't collide with the aircraft's AIR label below
+        tag_y = y + 19
+        if st.has_position:
+            vx, vy = view.to_screen(st.lat, st.lon)
+            if math.hypot(vx - x, vy - y) < 60:
+                tag_y = y - 33
         if live:
             sats = f" · {self.g.sats} sats" if self.g.sats and self.g.source != "manual" else ""
-            draw_tag(cr, x, y + 19, "GROUND" + sats, (0.10, 0.45, 0.85))
+            draw_tag(cr, x, tag_y, "GROUND" + sats, (0.10, 0.45, 0.85))
         else:
             age = last[2]
             when = f"{age:.0f} s" if age < 90 else f"{age / 60:.0f} min"
-            draw_tag(cr, x, y + 19, f"GROUND · no fix · last {when} ago", (0.42, 0.46, 0.52))
+            draw_tag(cr, x, tag_y, f"GROUND · no fix · last {when} ago", (0.42, 0.46, 0.52))
 
     def hit(self, view, x, y):
         return None

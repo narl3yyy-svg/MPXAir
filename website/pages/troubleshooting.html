@@ -32,6 +32,19 @@ than a laptop USB port supplies. Each brown-out also cold-starts a GPS without a
   <li>MPXAir reconnects on its own when the board comes back, and keeps the last known ground position on the map meanwhile.</li>
 </ul>
 
+<h2>Link quality around 95–98 %</h2>
+<p>A few damaged packets are normal on a radio link, and MAVLink is built to cope: MPXAir skips them and carries on. If you see a steady 2 % or more even at short range with a strong signal,
+check the radios' settings (on the RFD900 + ESP32 board, with its GCS Settings page):</p>
+<ul>
+  <li><b>MAVLink framing</b> (<code>MAVLINK</code> = 1) on both radios, so the radio sends whole packets.</li>
+  <li><b>Error correction</b> (<code>ECC</code>) on both radios, with the same air speed and settings on each side.</li>
+  <li>Power the ground board properly: power dips also corrupt data.</li>
+</ul>
+
+<h2>PreArm: Vehicle breaching Polygon fence</h2>
+<p>The aircraft is outside an inclusion geofence stored on it, or within <code>FENCE_MARGIN</code> metres of its edge. Look at the fence on the Fly map,
+move the aircraft well inside it, or edit or clear the fence on <b>Plan → Geofence</b> and press <b>Write</b>.</p>
+
 <h2>No heartbeat from the aircraft</h2>
 <ul>
   <li>Check the baud rate: 57600 for most telemetry radios, 115200 for USB.</li>

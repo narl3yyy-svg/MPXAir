@@ -179,6 +179,7 @@ class ParamsPage(Gtk.Box):
         self._show_editor(None)
 
         shared.hub.on("params-loaded", lambda ok: self.reload())
+        shared.hub.on("vehicle-firmware", lambda *_: self._firmware_known())
         shared.hub.on("vehicle-disconnected", lambda *_: self._disconnected())
         self.v.on("param", lambda name, val, new: idle(self._param_changed, name, val, new))
         GLib.timeout_add(500, self._fix_paned)
@@ -437,6 +438,21 @@ class ParamsPage(Gtk.Box):
         while child:
             child.set_sensitive(not readonly)
             child = child.get_next_sibling()
+
+    def _firmware_known(self):
+        """The firmware version can arrive after the parameters: fetch matching descriptions then."""
+        from ..core.params import ParamDocs
+        st = self.v.state
+        ver = ParamDocs.version_of(st.flight_sw_version)
+        if not ver or ParamDocs._version.get(st.vclass) == ver:
+            return
+
+        def done(note):
+            if self.rows:
+                self.reload()
+            if note:
+                toast(note)
+        background(lambda: ParamDocs.use_firmware(st.vclass, st.flight_sw_version), done)
 
     def _update_docs(self):
         from ..core.params import ParamDocs

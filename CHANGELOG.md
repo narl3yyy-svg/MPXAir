@@ -2,6 +2,20 @@
 
 All notable changes to MPXAir are listed here.
 
+## 1.2.2 — 2026-10-21
+
+Found during a live check with an RFD900 + ESP32 ground station and an ArduCopter 4.7.1 aircraft.
+
+### Fixed
+- The firmware version could be lost on a busy radio link, so matching parameter descriptions weren't used. It's now
+  requested until it arrives, the startup banner is requested (as Mission Planner does), and the version is read from
+  the banner as a fallback.
+- A step in the connection and Plan progress windows could stay on "reading…" (step handles were bound late).
+
+### Added
+- `mpxair --connect`: start and connect to the last-used device. Also `--version` and `--help`.
+- The GROUND label moves above its badge when the aircraft is right next to the ground station.
+
 ## 1.2.1 — 2026-10-21
 
 ### Fixed

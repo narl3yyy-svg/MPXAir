@@ -212,6 +212,7 @@ class MPXAirApp(Adw.Application):
         super().__init__(application_id=config.APP_ID, flags=Gio.ApplicationFlags.NON_UNIQUE)
         self.shared = None
         self.win = None
+        self.auto_connect = False
         GLib.set_application_name("MPXAir")
 
     def do_startup(self):
@@ -243,6 +244,10 @@ class MPXAirApp(Adw.Application):
             self.win = MainWindow(self, self.shared)
             self.shared.ground.start()
         self.win.present()
+        if self.auto_connect and not self.shared.vehicle.is_open:
+            # --connect: connect to the last-used device as soon as the window is up
+            GLib.timeout_add(800, lambda: self.win.connect_bar.toggle() and False)
+            self.auto_connect = False
         shot = os.environ.get("MPXAIR_SCREENSHOT")
         if shot:
             from .ui.debug import schedule_screenshots
@@ -300,5 +305,16 @@ def open_docs(parent, page=""):
 
 
 def main(argv=None):
+    args = sys.argv[1:] if argv is None else argv[1:]
+    if "-h" in args or "--help" in args:
+        print("MPXAir — ArduPilot ground control station\n\n"
+              "  mpxair             start MPXAir\n"
+              "  mpxair --connect   start and connect to the last-used device\n"
+              "  mpxair --version   show the version")
+        return 0
+    if "--version" in args:
+        print(f"MPXAir {config.VERSION}")
+        return 0
     app = MPXAirApp()
-    return app.run(argv if argv is not None else sys.argv[:1])
+    app.auto_connect = "--connect" in args
+    return app.run(sys.argv[:1])

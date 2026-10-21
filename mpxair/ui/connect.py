@@ -386,9 +386,9 @@ class ConnectBar(Gtk.Box):
             ver = ParamDocs.version_of(v.state.flight_sw_version)
             if ver:
                 h = [None]
-                idle(lambda: h.__setitem__(0, dlg.step(f"Parameter descriptions for firmware {ver}…")))
+                idle(lambda h=h: h.__setitem__(0, dlg.step(f"Parameter descriptions for firmware {ver}…")))
                 note = ParamDocs.use_firmware(st.vclass, v.state.flight_sw_version)
-                idle(lambda: h[0] and dlg.update_step(
+                idle(lambda h=h: h[0] and dlg.update_step(
                     h[0], note or "Parameter descriptions: bundled",
                     "ok" if note and note.startswith("Descriptions matched") else "warn"))
             idle(self.shared.hub.emit, "params-loaded", ok)
@@ -399,16 +399,16 @@ class ConnectBar(Gtk.Box):
                 if not v.is_open:
                     break
                 h = [None]
-                idle(lambda l=label_: h.__setitem__(0, dlg.step(f"{l}: reading…")))
+                idle(lambda h=h, l=label_: h.__setitem__(0, dlg.step(f"{l}: reading…")))
                 idle(dlg.progress, None, f"Reading {label_.lower()}…")
                 try:
                     out[name] = v.mission.download(mt)
                     n = len(out[name]) - (1 if mt == MISSION and out[name] else 0)
-                    idle(lambda l=label_, n=n: h[0] and dlg.update_step(
+                    idle(lambda h=h, l=label_, n=n: h[0] and dlg.update_step(
                         h[0], f"{l}: {n} item{'s' if n != 1 else ''}", "ok"))
                 except RuntimeError as e:
                     out[name] = None
-                    idle(lambda l=label_, e=e: h[0] and dlg.update_step(h[0], f"{l}: {e}", "warn"))
+                    idle(lambda h=h, l=label_, e=e: h[0] and dlg.update_step(h[0], f"{l}: {e}", "warn"))
             return ok, out
 
         def done(res):

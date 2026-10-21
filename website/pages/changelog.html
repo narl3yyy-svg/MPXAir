@@ -5,6 +5,13 @@ order: 3
 nav: What's new
 lead: Changes in each version of MPXAir.
 -->
+<h2>1.2.2</h2>
+<ul>
+  <li><b>Fixed:</b> the firmware version was sometimes never learned on a busy radio link, so matching parameter descriptions weren't used. It's now requested until it arrives, and read from the startup banner as a fallback.</li>
+  <li><b>Fixed:</b> a step in the connection and Plan progress windows could stay on "reading…".</li>
+  <li>The GROUND label moves above its badge when the aircraft is right next to the ground station.</li>
+  <li><code>mpxair --connect</code> starts and connects to the last-used device.</li>
+</ul>
 <h2>1.2.1</h2>
 <ul>
   <li><b>Fixed:</b> a stray diagonal line on the HUD next to the pitch ladder; the ladder now covers ±90° with dashed rungs below the horizon.</li>

@@ -11,6 +11,7 @@ import json
 import math
 import os
 import queue
+import re
 import struct
 import threading
 import time
@@ -171,6 +172,8 @@ class Vehicle:
         self._link_window = collections.deque(maxlen=40)
         self._chunked_statustext = {}
         self._last_home_req = 0.0
+        self._last_ver_req = 0.0
+        self._ver_tries = 0
         self._text_buf = b""
         self.gcs_board_seen = 0.0
         self._scan_board = False
@@ -220,6 +223,8 @@ class Vehicle:
         self._streams_requested = False
         self._text_buf = b""
         self.gcs_board_seen = 0.0
+        self._last_ver_req = time.monotonic()
+        self._ver_tries = 0
         # ESP32 ground-station boards answer "#GCS" text commands on the telemetry port
         self._scan_board = bool(getattr(self.transport, "espressif", False))
         self._running = True
@@ -400,6 +405,12 @@ class Vehicle:
         if st.connected and st.home_lat is None and now - self._last_home_req > 5.0:
             self._last_home_req = now
             self.request_message(242)
+        # the version request can be lost on a busy radio link: ask again until it arrives
+        if st.connected and not st.flight_sw_version and now - self._last_ver_req > 4.0 \
+                and self._ver_tries < 10:
+            self._last_ver_req = now
+            self._ver_tries += 1
+            self.request_message(148)
         if now - self._last_rate_calc >= 1.0:
             dt = now - self._last_rate_calc
             self.rates = {k: v / dt for k, v in self._rate_counts.items()}
@@ -574,6 +585,9 @@ class Vehicle:
         self.request_streams()
         self.request_message(242)    # HOME_POSITION
         self.request_message(148)    # AUTOPILOT_VERSION
+        # ask for the startup banner ("ArduCopter V4.7.1 …"), as Mission Planner does
+        self.send("COMMAND_LONG", **self.target, command=42428, confirmation=0,
+                  param1=0, param2=0, param3=0, param4=0, param5=0, param6=0, param7=0)
 
     def request_streams(self):
         """Ask the autopilot for telemetry at Mission Planner's default rates."""
@@ -878,7 +892,27 @@ def _h_statustext(v, m):
         del v._chunked_statustext[sid]
     entry = (time.time(), m.severity, text)
     v.statustext.append(entry)
+    if not v.state.flight_sw_version:
+        _version_from_banner(v, text)
     v.emit("statustext", entry)
+
+
+_BANNER = re.compile(r"^(ArduCopter|ArduPlane|ArduRover|ArduSub|AntennaTracker|Blimp|APM:\w+)\s+"
+                     r"V(\d+)\.(\d+)\.(\d+)(?:-?(dev|beta\d*|rc\d*))?")
+
+
+def _version_from_banner(v, text):
+    """Fallback when AUTOPILOT_VERSION never arrives: read "ArduCopter V4.7.1 (dbe79216)"."""
+    m = _BANNER.match(text.strip())
+    if not m:
+        return
+    major, minor, patch = int(m.group(2)), int(m.group(3)), int(m.group(4))
+    kind = (m.group(5) or "").lower()
+    typ = 255 if not kind else (0 if kind == "dev" else 128 if kind.startswith("beta") else 192)
+    st = v.state
+    st.flight_sw_version = (major << 24) | (minor << 16) | (patch << 8) | typ
+    st.firmware = f"{m.group(1)} V{major}.{minor}.{patch}" + (f" {kind}" if kind else "")
+    v.emit("firmware", None)
 
 
 def _h_autopilot_version(v, m):

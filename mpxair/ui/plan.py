@@ -1097,21 +1097,21 @@ class PlanPage(Gtk.Box):
             for name, title, mt in (("mission", "Mission", MISSION), ("fence", "Geofence", FENCE),
                                     ("rally", "Rally points", RALLY)):
                 h = [None]
-                idle(lambda t=title: h.__setitem__(0, dlg.step(f"{t}: reading…")))
+                idle(lambda h=h, t=title: h.__setitem__(0, dlg.step(f"{t}: reading…")))
 
-                def prog(a, b, t=title):
-                    idle(lambda: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
+                def prog(a, b, t=title, h=h):
+                    idle(lambda h=h: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
                                   h[0] and dlg.update_step(h[0], f"{t}: item {a} of {b}")))
                 try:
                     items = self.v.mission.download(mt, progress=prog, cancel=cancel)
                     out[name] = items
                     n = len(items) - (1 if mt == MISSION and items else 0)
-                    idle(lambda t=title, n=n: h[0] and dlg.update_step(
+                    idle(lambda h=h, t=title, n=n: h[0] and dlg.update_step(
                         h[0], f"{t}: {n} item{'s' if n != 1 else ''}", "ok"))
                 except RuntimeError as e:
                     out[name] = None
                     out["errors"].append(f"{title}: {e}")
-                    idle(lambda t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
+                    idle(lambda h=h, t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
                     if cancel.is_set():
                         break
             return out
@@ -1168,17 +1168,17 @@ class PlanPage(Gtk.Box):
             res = []
             for title, its, mt, n in jobs:
                 h = [None]
-                idle(lambda t=title: h.__setitem__(0, dlg.step(f"{t}: writing…")))
+                idle(lambda h=h, t=title: h.__setitem__(0, dlg.step(f"{t}: writing…")))
 
-                def prog(a, b, t=title):
-                    idle(lambda: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
+                def prog(a, b, t=title, h=h):
+                    idle(lambda h=h: (dlg.progress(a / max(1, b), f"{t}: item {a} of {b}"),
                                   h[0] and dlg.update_step(h[0], f"{t}: item {a} of {b}")))
                 try:
                     self.v.mission.upload(its, mt, progress=prog, cancel=cancel)
                 except RuntimeError as e:
-                    idle(lambda t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
+                    idle(lambda h=h, t=title, e=e: h[0] and dlg.update_step(h[0], f"{t}: {e}", "fail"))
                     raise
-                idle(lambda t=title, n=n: h[0] and dlg.update_step(
+                idle(lambda h=h, t=title, n=n: h[0] and dlg.update_step(
                     h[0], f"{t}: {n} item{'s' if n != 1 else ''} written and confirmed", "ok"))
                 res.append(f"{title.lower()} ({n})")
             self.v.request_message(242)
