@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect your own ground station · MPXAir documentation</title>
+<meta name="description" content="How to make any ground station with a GPS and a serial link to the computer work with MPXAir.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html" class="active">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Hardware and integration</div><h1>Connect your own ground station</h1><p class="lead">How to make any ground station with a GPS and a serial link to the computer work with MPXAir.</p>
+<p>Your ground station shares the USB/serial link with the aircraft telemetry (MAVLink). MPXAir picks your messages out of that stream, so you can
+send <b>text lines</b> between MAVLink packets, or <b>MAVLink messages</b> of your own. Choose whichever is easiest for your firmware, then pick the
+matching <a href="ground-station-types.html">ground station type</a>.</p>
+
+<h2 id="rules-for-text-lines">Rules for text lines</h2>
+<ul>
+  <li>Each line starts with a fixed <b>prefix</b> (for example <code>#GND </code> or <code>$GND,</code>) and ends with <code>\n</code>.</li>
+  <li>Write the whole line at once, between MAVLink packets. Never insert it inside a MAVLink packet.</li>
+  <li>Use plain ASCII and keep lines under a few kilobytes.</li>
+  <li>MAVLink parsers skip text, so the aircraft link isn't disturbed.</li>
+</ul>
+
+<h2 id="option-1-json-reply-to-a-command">Option 1 — JSON reply to a command</h2>
+<p>MPXAir sends a poll command (default <code>#GND?</code>, then <code>\r\n</code>) at the interval you choose. Your firmware answers with one line:</p>
+<pre><code>#GND {"lat":-35.363261,"lon":149.165230,"alt":584.2,"sats":11,"fix":3,"hdop":0.8}</code></pre>
+<p>Ground station type: <b>Custom board — JSON replies</b>. Set the field paths if yours differ (nested paths like <code>gps.lat</code> work).
+If you send degrees × 10⁷, set the position scale to <code>0.0000001</code>.</p>
+<pre><code>// Arduino / ESP32 sketch (uses the TinyGPSPlus library)
+#include &lt;TinyGPSPlus.h&gt;
+TinyGPSPlus gps;
+HardwareSerial GPSSerial(1);
+String cmd;
+
+void setup() {
+  Serial.begin(115200);                       // USB link to the computer
+  GPSSerial.begin(9600, SERIAL_8N1, 6, 7);    // GPS module: RX, TX pins
+}
+
+void loop() {
+  while (GPSSerial.available()) gps.encode(GPSSerial.read());
+  while (Serial.available()) {                // (forward everything else to your radio here)
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (cmd == "#GND?") {
+        Serial.printf("#GND {\"lat\":%.7f,\"lon\":%.7f,\"alt\":%.1f,\"sats\":%u,\"fix\":%d,\"hdop\":%.1f}\n",
+          gps.location.lat(), gps.location.lng(), gps.altitude.meters(),
+          gps.satellites.value(), gps.location.isValid() ? 3 : 0, gps.hdop.hdop());
+      }
+      cmd = "";
+    } else if (cmd.length() &lt; 32) cmd += c;
+  }
+}</code></pre>
+
+<h2 id="option-2-comma-separated-lines">Option 2 — comma-separated lines</h2>
+<p>The simplest firmware: print one line a second, without being asked.</p>
+<pre><code>$GND,-35.363261,149.165230,584.2,11,3</code></pre>
+<p>Ground station type: <b>Custom board — comma-separated replies</b>. Columns: 1 latitude, 2 longitude, 3 altitude (m), 4 satellites, 5 fix.
+Change the column numbers if your order differs. Leave the poll command empty if the board sends lines by itself.</p>
+
+<h2 id="option-3-forward-the-gps-s-nmea">Option 3 — forward the GPS's NMEA</h2>
+<p>Pass the GPS module's <code>$GPGGA</code> / <code>$GNGGA</code> and <code>$GPRMC</code> / <code>$GNRMC</code> sentences straight into the USB stream (whole sentences, with their checksums).
+Ground station type: <b>GPS mixed into the telemetry</b>.</p>
+
+<h2 id="option-4-mavlink">Option 4 — MAVLink</h2>
+<p>Send <code>GPS_RAW_INT</code> (24), <code>GLOBAL_POSITION_INT</code> (33) or <code>GPS_INPUT</code> (232) with a system ID other than the aircraft's.
+System 255 is the convention, and also works for ArduPilot's FOLLOW mode with <code>FOLL_SYSID=255</code>. Ground station type: <b>MAVLink GPS from the ground station</b>, with the matching system ID.</p>
+
+<h2 id="tips">Tips</h2>
+<ul>
+  <li><b>ESP32 boards</b> can reset when DTR/RTS change. Keep <b>Release DTR and RTS</b> on for them.</li>
+  <li>Use <b>Test now</b> and open <b>Raw message</b> on the Ground tab while you develop.</li>
+  <li>MPXAir's built-in demo drone answers <code>#GND?</code> and <code>#GCS status</code> too, so you can compare against it.</li>
+</ul>
+<nav class="pager"><a class="prev" href="rfd900-esp32.html"><small>← Previous</small>RFD900 + ESP32 ground station</a><a class="next" href="simulator.html"><small>Next →</small>Testing with the ArduPilot simulator</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

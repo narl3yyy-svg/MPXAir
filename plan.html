@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan screen · MPXAir documentation</title>
+<meta name="description" content="Create missions, geofences and rally points on the map, and send them to the aircraft.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html" class="active">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Using MPXAir</div><h1>Plan screen</h1><p class="lead">Create missions, geofences and rally points on the map, and send them to the aircraft.</p>
+<figure><img src="assets/img/plan.jpg" alt="Plan screen"><figcaption>A mission with leg distances, the list of items, and the item editor.</figcaption></figure>
+
+<h2 id="make-a-mission">Make a mission</h2>
+<ol class="steps">
+  <li>Set <b>New item altitude</b> and the <b>Altitude reference</b> in the side panel.</li>
+  <li>Press <b>Takeoff</b> to add a takeoff (only one is allowed; pressing it again selects it).</li>
+  <li><b>Click the map</b> to add waypoints. Drag a waypoint to move it.</li>
+  <li>Finish with <b>RTL</b> (return to launch) or <b>Land</b>.</li>
+  <li>Press <b>Write</b>. A window shows each part being sent and what the aircraft confirmed.</li>
+</ol>
+<p>The bottom-left card shows the number of items, the total distance and an estimated flight time. It says <i>not written to vehicle</i> until you press Write.</p>
+
+<h3 id="right-click-on-the-map">Right-click on the map</h3>
+<p>Waypoint, spline waypoint, loiter (turns / time / until told otherwise), land here, point camera here (ROI), set the planned home.</p>
+
+<h3 id="selecting-and-editing">Selecting and editing</h3>
+<ul>
+  <li><b>Click</b> an item in the list (or its marker) to select it. <b>Ctrl+click</b> adds or removes items, and <b>Shift+click</b> selects a range.</li>
+  <li>The editor shows only the fields that command uses, with the same names as Mission Planner. Hover over a field to see what it means.</li>
+  <li>Changing a waypoint to <b>Takeoff</b> removes its map position (a takeoff climbs straight up). Changing it back puts it next to the previous waypoint.</li>
+  <li>With several items selected, you can set the altitude of all of them at once.</li>
+  <li>Move items up or down, and delete with <kbd>Delete</kbd>. Undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and redo with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.</li>
+</ul>
+
+<h3 id="altitude-reference">Altitude reference</h3>
+<table>
+  <tr><th>Reference</th><th>Meaning</th></tr>
+  <tr><td>Relative to home</td><td>Height above the takeoff point. This is the usual choice.</td></tr>
+  <tr><td>Above sea level</td><td>Absolute altitude (AMSL).</td></tr>
+  <tr><td>Above terrain</td><td>Height above the ground below. Needs terrain data on the aircraft.</td></tr>
+</table>
+
+<h3 id="common-commands">Common commands</h3>
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td>Waypoint</td><td>Fly to a point. <i>Delay</i> waits there for some seconds.</td></tr>
+  <tr><td>Spline Waypoint</td><td>Fly a smooth curve through the point.</td></tr>
+  <tr><td>Takeoff</td><td>Climb to the altitude.</td></tr>
+  <tr><td>Loiter Turns / Time / Unlim</td><td>Circle or hover for a number of turns, for some seconds, or until told otherwise.</td></tr>
+  <tr><td>Return To Launch</td><td>Go home (and land, for copters).</td></tr>
+  <tr><td>Land</td><td>Land at the point (or where it is).</td></tr>
+  <tr><td>Do Change Speed</td><td>Change speed for the rest of the mission.</td></tr>
+  <tr><td>Do Set ROI</td><td>Point the camera or gimbal at a location.</td></tr>
+  <tr><td>Do Jump</td><td>Repeat part of the mission.</td></tr>
+</table>
+
+<h2 id="geofence">Geofence</h2>
+<p>Switch to <b>Geofence</b> at the top of the map.</p>
+<ul>
+  <li>Click to add the corners of an <b>inclusion polygon</b> (the aircraft must stay inside).</li>
+  <li>Right-click for an <b>exclusion polygon</b> (keep out), <b>inclusion or exclusion circles</b>, or the <b>return point</b>.</li>
+  <li><b>Settings…</b> turns the fence on or off and sets the maximum altitude and the breach action.</li>
+</ul>
+<div class="callout warn"><b>Remember</b><p>Writing the fence shape doesn't switch the fence on. Use <b>Settings…</b> (FENCE_ENABLE).</p></div>
+
+<h2 id="rally-points">Rally points</h2>
+<p>Switch to <b>Rally</b> and click to add safe places for RTL to go instead of home.</p>
+
+<h2 id="survey-grid">Survey grid</h2>
+<ol class="steps">
+  <li>Switch to <b>Survey area</b> and click the corners of the area.</li>
+  <li>Press <b>Generate grid…</b> and choose the line spacing, direction, altitude and turn margin.</li>
+  <li>MPXAir adds back-and-forth waypoints covering the area.</li>
+</ol>
+
+<h2 id="clearing">Clearing</h2>
+<p>The bin button on the map toolbar can clear the mission, geofence, rally points, survey area or <b>everything</b>.
+Each mode also has a <b>Clear</b> button in the side panel. When connected, you can choose <b>Clear plan</b> (the aircraft keeps its copy until you Write)
+or <b>Clear plan and vehicle</b> (erase the aircraft's copy straight away).</p>
+
+<h2 id="read-write-and-files">Read, write and files</h2>
+<ul>
+  <li><b>Read</b> gets the mission, geofence and rally points from the aircraft, with a progress window.</li>
+  <li><b>Write</b> sends them and shows what was confirmed, for example <i>Mission: 5 items written and confirmed</i>.</li>
+  <li>The <b>Files</b> button loads and saves <code>.waypoints</code> files (the Mission Planner format) and <code>.poly</code> survey areas.</li>
+</ul>
+<nav class="pager"><a class="prev" href="fly.html"><small>← Previous</small>Fly screen</a><a class="next" href="firmware.html"><small>Next →</small>Installing firmware</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

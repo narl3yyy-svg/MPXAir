@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frame and calibration · MPXAir documentation</title>
+<meta name="description" content="Frame type, accelerometer, compass and radio calibration — do these before the first flight.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html" class="active">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Using MPXAir</div><h1>Frame and calibration</h1><p class="lead">Frame type, accelerometer, compass and radio calibration — do these before the first flight.</p>
+<h2 id="frame-type">Frame type</h2>
+<p><b>Setup → Frame type</b> sets <code>FRAME_CLASS</code> and <code>FRAME_TYPE</code> (or the QuadPlane <code>Q_FRAME_*</code> settings) and the board orientation.
+A diagram shows the motor layout of the selected frame. Reboot after changing the frame class.</p>
+
+<h2 id="accelerometer">Accelerometer</h2>
+<figure><img src="assets/img/setup-accel.jpg" alt="Accelerometer calibration"></figure>
+<ol class="steps">
+  <li>Press <b>Calibrate accelerometer</b>.</li>
+  <li>MPXAir asks for six positions in turn: level, left side, right side, nose down, nose up and on its back. Hold the vehicle still and press <b>Done — next position</b> each time.</li>
+  <li>When it says <i>Calibration successful</i>, reboot the autopilot.</li>
+</ol>
+<p>Also available: <b>Calibrate level only</b> (trims roll and pitch with the vehicle level) and <b>Simple calibration</b> (one position, for large vehicles).</p>
+
+<h2 id="compass">Compass</h2>
+<figure><img src="assets/img/setup-compass.jpg" alt="Compass calibration"></figure>
+<ol class="steps">
+  <li>Move away from metal, cars and magnets. Press <b>Start</b>.</li>
+  <li>Slowly turn the vehicle so each side points at the ground in turn. The bars show progress for each compass.</li>
+  <li>When all compasses say <i>Success</i>, press <b>Accept</b> if asked, then reboot.</li>
+</ol>
+<p>Lower fitness numbers are better. Below the calibration are the compass settings (use, orientation, fitness).</p>
+
+<h2 id="radio">Radio</h2>
+<ol class="steps">
+  <li>Switch the transmitter on. You should see the bars move.</li>
+  <li>Press <b>Calibrate</b> and move every stick and switch to both ends.</li>
+  <li>Centre the sticks, put the throttle down, and press <b>Done</b>. Check the values and press <b>Save</b>.</li>
+</ol>
+<nav class="pager"><a class="prev" href="firmware.html"><small>← Previous</small>Installing firmware</a><a class="next" href="modes-failsafes.html"><small>Next →</small>Flight modes, failsafes and battery</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

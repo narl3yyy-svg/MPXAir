@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fly screen · MPXAir documentation</title>
+<meta name="description" content="Everything you need while the aircraft is flying: the HUD, the map, live numbers and quick actions.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html" class="active">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Using MPXAir</div><h1>Fly screen</h1><p class="lead">Everything you need while the aircraft is flying: the HUD, the map, live numbers and quick actions.</p>
+<figure><img src="assets/img/fly.jpg" alt="Fly screen"><figcaption>The Fly screen with the aircraft (AIR) and the ground station (GROUND) on the map.</figcaption></figure>
+
+<h2 id="hud">HUD</h2>
+<p>The artificial horizon at the top left works like Mission Planner's:</p>
+<ul>
+  <li><b>Horizon and pitch ladder</b>: the aircraft's roll and pitch.</li>
+  <li><b>Heading tape</b> along the top. A green marker shows the bearing to the current target.</li>
+  <li><b>Speed tape</b> (left) and <b>altitude tape</b> (right, height above home). A climb-rate bar is on the right edge.</li>
+  <li><b>ARMED / DISARMED</b> in the middle, plus <b>NO TELEMETRY</b> if the link drops.</li>
+  <li>Along the bottom: flight mode, battery, GPS, distance to the waypoint, link quality and the time.</li>
+  <li>Warnings in orange or red: <b>VIBE</b> (vibration), <b>EKF</b> (position estimate) and <b>PREARM</b> (not ready to arm).</li>
+</ul>
+
+<h2 id="the-map">The map</h2>
+<ul>
+  <li><b>AIR</b>: the aircraft, as a red arrow when armed, with a heading line and a target-bearing line.</li>
+  <li><b>GROUND</b>: your <a href="ground-position.html">ground station</a>, as a blue antenna badge with its satellite count. A dashed line joins it to the aircraft, labelled with the distance.</li>
+  <li><b>H</b>: home. The mission, geofence and rally points are drawn too.</li>
+  <li><b>Trail</b>: where the aircraft has been. It keeps the last 20 seconds by default and older track fades out. Change this with <i>Trail on map keeps</i> on the Actions tab, or in Preferences.</li>
+  <li><b>Aircraft GPS card</b> (bottom-left), as in Mission Planner: fix type, satellites and HDOP, green, orange or red by quality.</li>
+  <li><b>Ground GPS card</b> (bottom-right): the ground station's fix, satellites, HDOP and distance to the aircraft. If the ground GPS loses its fix, the GROUND marker stays at its last known position, greyed, with "no fix · last … ago".</li>
+  <li><b>Status chips</b> (top): armed state, mode, altitude and speed, battery and link quality.</li>
+</ul>
+<figure><img src="assets/img/fly-gps-card.jpg" alt="Aircraft and ground GPS cards"><figcaption>The aircraft's GPS card (bottom-left) and the ground station's GPS card (bottom-right).</figcaption></figure>
+<h3 id="gps-fix-types">GPS fix types</h3>
+<table>
+  <tr><th>Shown as</th><th>Meaning</th></tr>
+  <tr><td>No GPS / No Fix</td><td>No GPS detected, or not enough satellites yet.</td></tr>
+  <tr><td>2D Fix</td><td>Position but no reliable altitude. Not good enough to fly in position modes.</td></tr>
+  <tr><td>3D Fix</td><td>A full position. The minimum for Loiter, RTL and missions.</td></tr>
+  <tr><td><b>3D Fix + DGPS</b></td><td>A 3D fix <b>improved with correction signals</b> from SBAS satellites (WAAS in North America, EGNOS in Europe, and so on). This is <b>better</b> than a plain 3D fix, and it's normal to see it for the whole flight.</td></tr>
+  <tr><td>RTK Float / RTK Fixed</td><td>Centimetre-level positioning with an RTK base station.</td></tr>
+</table>
+<p>The fix type alone isn't everything. Also check the satellites (10 or more is good) and HDOP (below 1.5 is good). ArduPilot refuses to arm with <i>PreArm: High GPS HDOP</i> until the HDOP is low enough.</p>
+
+<h3 id="map-buttons-right-side">Map buttons (right side)</h3>
+<table>
+  <tr><th>Button</th><th>What it does</th></tr>
+  <tr><td>Follow</td><td>Keeps the map centred on the aircraft.</td></tr>
+  <tr><td>Ground station</td><td>Shows or hides the ground station on the map.</td></tr>
+  <tr><td>Keep both in view</td><td>Frames the aircraft and the ground station together and follows both.</td></tr>
+  <tr><td>Zoom + / −</td><td>Zoom. The scroll wheel and touchpad pinch work too.</td></tr>
+  <tr><td>Map type</td><td>Satellite, street, topographic… and <a href="maps.html#offline-maps">offline maps</a>.</td></tr>
+  <tr><td>Fit mission</td><td>Shows the whole mission.</td></tr>
+</table>
+<h3 id="right-click-menu">Right-click menu</h3>
+<p><b>Fly to here</b> (guided), <b>Fly to here at altitude…</b>, <b>Point camera here</b>, <b>Set home here</b>, <b>Measure distance from here</b>, <b>Centre map here</b>, <b>Set ground station position here</b> and <b>Copy coordinates</b>.</p>
+
+<h2 id="quick-view">Quick view</h2>
+<p>Big, easy-to-read numbers. You can have 2 to 16 tiles.</p>
+<ul>
+  <li><b>Click a tile</b> to choose what it shows, from 45 values in sections: height and position, speed and attitude, navigation, battery, GPS and health, telemetry link, and ground station.</li>
+  <li><b>Add a tile</b> is at the bottom. <b>Remove this tile</b> is in each tile's menu.</li>
+</ul>
+<p>Useful extras include <i>Distance flown</i>, <i>Power (W)</i>, <i>Fade margin</i>, <i>Radio RSSI (aircraft)</i>, <i>Distance / bearing / elevation from ground</i> and <i>Vibration</i>.</p>
+
+<h2 id="actions">Actions</h2>
+<figure><img src="assets/img/fly-actions.jpg" alt="Actions tab"></figure>
+<ul>
+  <li><b>Arm / Disarm.</b> If arming is refused, MPXAir shows the aircraft's reason and offers <i>Force Arm</i> for experts.</li>
+  <li><b>Takeoff.</b> Switches to GUIDED, arms and climbs to the height you enter. Planes switch to TAKEOFF mode instead.</li>
+  <li><b>Mode buttons</b> for the common modes, plus a list of every mode.</li>
+  <li><b>Mission</b>: <i>Set WP</i>, <i>Start Mission</i>, <i>Restart Mission</i>.</li>
+  <li><b>Guided changes</b>: change speed and altitude.</li>
+  <li><b>Vehicle</b>:
+    <ul>
+      <li>calibrate the gyro or barometer, reboot, trigger the camera;</li>
+      <li><i>Set Home Here</i>, <i>Clear Track</i>, and the trail length.</li>
+    </ul></li>
+</ul>
+
+<h2 id="status">Status</h2>
+<figure><img src="assets/img/fly-status.jpg" alt="Status tab"></figure>
+<p><b>Air status</b> covers the vehicle, armed and ready, battery, GPS, EKF, vibration, telemetry link, SiK radio RSSI and noise, home, flight time, wind and firmware.</p>
+<p><b>Ground status</b> covers your position and its source, the aircraft's distance, bearing and elevation from you, the laptop battery, map server and internet status, telemetry recording, data rates, Follow Me and the antenna tracker.</p>
+<p>Each row has a green, orange or red dot.</p>
+
+<h2 id="messages-and-rc-servo">Messages and RC/Servo</h2>
+<p><b>Messages</b> lists everything the autopilot says, colour-coded (errors in red, warnings in orange). Important errors also pop up as a notification.
+<b>RC/Servo</b> shows the 16 radio inputs and 16 outputs as live bars.</p>
+<nav class="pager"><a class="prev" href="connecting.html"><small>← Previous</small>Connecting to your aircraft</a><a class="next" href="plan.html"><small>Next →</small>Plan screen</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

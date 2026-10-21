@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connecting to your aircraft · MPXAir documentation</title>
+<meta name="description" content="USB, telemetry radios, UDP and TCP — and what the connection window tells you.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html" class="active">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Connecting</div><h1>Connecting to your aircraft</h1><p class="lead">USB, telemetry radios, UDP and TCP — and what the connection window tells you.</p>
+<h2 id="choose-a-connection">Choose a connection</h2>
+<p>The connection controls are at the top right of the window: the connection list, a refresh button, the
+baud rate or address, and <b>Connect</b>.</p>
+<table>
+  <tr><th>Connection</th><th>Use it for</th><th>Settings</th></tr>
+  <tr><td><code>ACM0 · …</code>, <code>USB0 · …</code></td><td>A flight controller on USB, a telemetry radio, or a ground station board</td><td>Baud rate: <b>115200</b> for USB flight controllers, usually <b>57600</b> for radios</td></tr>
+  <tr><td>UDP listen</td><td>Wi-Fi telemetry, companion computers, other software forwarding MAVLink</td><td>Port, usually <code>14550</code></td></tr>
+  <tr><td>TCP</td><td>The ArduPilot simulator, network bridges</td><td><code>host:port</code>, e.g. <code>127.0.0.1:5760</code></td></tr>
+  <tr><td>UDP send</td><td>Sending to a fixed address</td><td><code>host:port</code></td></tr>
+  <tr><td>Demo drone</td><td>Trying MPXAir without hardware</td><td>—</td></tr>
+</table>
+<p>USB devices are listed with a short name, for example <code>ACM0 · Espressif</code>. Open the list to see the full name.
+New devices are noticed as soon as they're plugged in.</p>
+
+<h2 id="the-connection-window">The connection window</h2>
+<p>When you press <b>Connect</b>, a window shows each step, like Mission Planner's:</p>
+<ol>
+  <li><b>Opened</b> the port or address.</li>
+  <li><b>Heartbeat received</b> from the aircraft, with its type and system ID. This is the proof the air unit is talking to you.</li>
+  <li><b>Parameters</b> counting up, for example <i>812 / 1431</i>.</li>
+  <li><b>Mission</b>, <b>Geofence</b> and <b>Rally points</b> read from the aircraft.</li>
+</ol>
+<p>It closes on its own a couple of seconds after everything has loaded. Press <b>Hide</b> to close it early (loading carries on), or <b>Cancel</b> while it is still waiting for the heartbeat.</p>
+<figure><img src="assets/img/connect-progress.jpg" alt="Connection window"><figcaption>Heartbeat received and all 1431 parameters loaded.</figcaption></figure>
+
+<h2 id="ground-station-only-aircraft-off">Ground station only (aircraft off)</h2>
+<p>If you connect to a ground station board (for example the <a href="rfd900-esp32.html">RFD900 + ESP32 board</a>) while the aircraft is switched off, MPXAir keeps the link open and says <i>Waiting for aircraft</i>.
+The ground station's GPS is shown straight away. When the aircraft powers up, MPXAir connects to it and loads its parameters automatically.</p>
+
+<h2 id="disconnecting">Disconnecting</h2>
+<p>Press <b>Disconnect</b> (top right). A window asks you to confirm, because you'll lose telemetry and control of the aircraft from MPXAir.
+If the aircraft is <b>armed</b>, the warning says so, and reminds you that its ground-station failsafe may trigger.</p>
+<p>After you confirm, MPXAir closes the port completely, stops Follow Me and any automatic reconnect, and confirms
+<i>Disconnected — /dev/ttyACM1 is free for other programs</i>. You can then open the port in another program, such as the GCS Settings page or Mission Planner.</p>
+<div class="callout"><b>One program at a time</b><p>While MPXAir is connected it has the serial port to itself, and other programs get a "busy" error.
+If another program already has the port open when you press Connect, MPXAir tells you which one.</p></div>
+
+<h2 id="automatic-reconnect">Automatic reconnect</h2>
+<p>If a USB device drops off (unplugged, or a power dip on the board), MPXAir shows <i>Reconnecting…</i> and waits up to two minutes.
+It recognises the same device by its unique USB ID, even if it comes back under a new name (for example <code>ttyACM1</code> instead of <code>ttyACM0</code>),
+then reconnects and reloads everything. Press <b>Stop</b> to give up. It never reconnects after you press <b>Disconnect</b> yourself.</p>
+
+<h2 id="telemetry-recording">Telemetry recording</h2>
+<p>Everything received while connected is saved to a telemetry log (<code>.tlog</code>) in
+<code>~/Documents/MPXAir/telemetry-logs</code>. You can <a href="logs.html#replay-a-flight">replay it</a> later. Turn this off in Preferences → General.</p>
+
+<h2 id="if-it-doesn-t-connect">If it doesn't connect</h2>
+<ul>
+  <li><b>No heartbeat within 30 seconds.</b> Check that the aircraft is powered, that the right port is selected, and that the baud rate matches the radio (57600 for most SiK/RFD radios).</li>
+  <li><b>Permission denied.</b> Add yourself to the <code>dialout</code> group (see <a href="troubleshooting.html">Troubleshooting</a>).</li>
+  <li><b>The port isn't in the list.</b> See <a href="troubleshooting.html#a-usb-device-disappears">a USB device disappears</a>.</li>
+</ul>
+<nav class="pager"><a class="prev" href="quick-start.html"><small>← Previous</small>Quick start tour</a><a class="next" href="fly.html"><small>Next →</small>Fly screen</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

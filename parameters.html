@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parameters · MPXAir documentation</title>
+<meta name="description" content="Every setting on the aircraft, grouped, searchable and explained — and changed safely.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html" class="active">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Using MPXAir</div><h1>Parameters</h1><p class="lead">Every setting on the aircraft, grouped, searchable and explained — and changed safely.</p>
+<figure><img src="assets/img/parameters.jpg" alt="Parameters screen"></figure>
+<h2 id="finding-a-parameter">Finding a parameter</h2>
+<ul>
+  <li><b>Groups</b> (left): browse by subject, such as <i>Battery (BATT)</i>, <i>Failsafes (FS)</i>, <i>Servo / motor outputs (SERVO)</i> and <i>EKF3 (EK3)</i>, without knowing the exact name. Small groups are under <i>Other</i>.</li>
+  <li><b>Search</b>: type part of the name or of the description, such as <code>rtl alt</code> or <code>battery capacity</code>. Searching always looks at every parameter.</li>
+  <li><b>Filter</b>: All, Changed (not yet written), Standard or Advanced.</li>
+  <li><b>Hover</b> over any row to see what it does.</li>
+</ul>
+<h2 id="changing-parameters">Changing parameters</h2>
+<ol class="steps">
+  <li>Select a parameter. The editor on the right shows its description, units, range and a control: a dropdown for named values, switches for bitmasks, or a number field.</li>
+  <li>Press <b>Keep change</b> to collect it (changed values are highlighted), or <b>Write now</b> to send it straight away.</li>
+  <li>Press <b>Write changes</b> at the top to send everything you collected. If any parameter needs a reboot, MPXAir offers to do it.</li>
+</ol>
+<h2 id="files">Files</h2>
+<ul>
+  <li><b>Save…</b> writes every parameter to a <code>.param</code> file (Mission Planner format).</li>
+  <li><b>Load…</b> reads a Mission Planner, MAVProxy or QGroundControl file. It compares it with the aircraft and <b>stages only the differences</b> for you to review. Calibration and counter values are never overwritten.</li>
+</ul>
+<h2 id="descriptions">Descriptions</h2>
+<p>Select a parameter to see, on the right:</p>
+<ul>
+  <li><b>What it does</b>: the full description;</li>
+  <li><b>Options</b>: what each value means, with the current one marked (or the bits, for bitmasks);</li>
+  <li>its range, units and step, and whether it needs a reboot.</li>
+</ul>
+<p>When you connect while online, MPXAir downloads the descriptions that <b>exactly match the aircraft's firmware version</b>
+(for example ArduCopter 4.7.1), as Mission Planner does. They are cached, so they also work offline later. Without internet it uses the bundled descriptions.
+<b>Preferences → Telemetry → Update</b> downloads ArduPilot's latest set by hand.</p>
+<nav class="pager"><a class="prev" href="motor-test.html"><small>← Previous</small>Motor test</a><a class="next" href="logs.html"><small>Next →</small>Logs</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

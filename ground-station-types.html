@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ground station types · MPXAir documentation</title>
+<meta name="description" content="MPXAir can read the GPS of different ground stations that share the telemetry link. Pick yours and adjust its settings.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html" class="active">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Ground station</div><h1>Ground station types</h1><p class="lead">MPXAir can read the GPS of different ground stations that share the telemetry link. Pick yours and adjust its settings.</p>
+<figure><img src="assets/img/ground-types.jpg" alt="Ground station type and settings"><figcaption>Ground → Ground station type, with the board's details, the last message received, and the settings for this type.</figcaption></figure>
+
+<h2 id="choosing-a-type">Choosing a type</h2>
+<p>Select <b>A ground station on the telemetry link</b> as the ground position, then pick a <b>Type</b>:</p>
+<table>
+  <tr><th>Type</th><th>How the GPS arrives</th></tr>
+  <tr><td><b>RFD900 + ESP32 ground station board</b></td><td>MPXAir sends <code>#GCS status</code> once a second. The board replies with a <code>#GCS {json}</code> line that includes its GPS. See <a href="rfd900-esp32.html">RFD900 + ESP32</a>.</td></tr>
+  <tr><td><b>GPS mixed into the telemetry</b></td><td>The ground station already sends NMEA sentences (<code>$GPGGA</code>, <code>$GNRMC</code>…) or MAVLink GPS messages on the link. Nothing is sent to it.</td></tr>
+  <tr><td><b>MAVLink GPS from the ground station</b></td><td>The ground station sends <code>GPS_RAW_INT</code>, <code>GLOBAL_POSITION_INT</code> or <code>GPS_INPUT</code> with its own system ID (255 by default).</td></tr>
+  <tr><td><b>Custom board — JSON replies</b></td><td>Your own firmware answers a text command with a JSON line, e.g. <code>#GND {"lat":-35.36,"lon":149.16,"alt":584,"sats":11,"fix":3}</code>.</td></tr>
+  <tr><td><b>Custom board — comma-separated replies</b></td><td>Your firmware sends lines such as <code>$GND,-35.363261,149.165230,584.0,11,3</code>, on request or by itself.</td></tr>
+</table>
+<p>Building your own? See <a href="custom-ground-station.html">Connect your own ground station</a>.</p>
+
+<h2 id="the-settings-for-each-type">The settings for each type</h2>
+<p>Each type has its own settings, saved separately, so switching types never loses them. Change a value and press <b>Save</b>.
+<b>Reset</b> puts the defaults back. <b>Test now</b> sends the poll command once, and the reply appears under <i>Raw message</i>, which is the quickest way to check a new board.</p>
+<p>Above the settings, MPXAir shows what it understood from the board: the <b>board</b> (name, firmware, uptime), the <b>GPS</b> (fix, satellites, HDOP, altitude)
+and, for the RFD900 + ESP32 board, its <b>radio links</b> (RFD900 link quality, ELRS RSSI, LQ and SNR, RC rate) and <b>board health</b> (ESP32 temperature, bytes sent and received).
+Replies damaged by telemetry bytes mixed into the line are repaired where possible.</p>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Poll command</td><td>Text sent to ask for the status, e.g. <code>#GCS status</code>. Leave empty if the board sends its position by itself.</td></tr>
+  <tr><td>Start command</td><td>Sent once when the link opens (optional), e.g. <code>#GCS hello</code>.</td></tr>
+  <tr><td>Reply prefix</td><td>Replies start with this text, e.g. <code>#GCS </code> or <code>$GND,</code>. Everything after it is the data.</td></tr>
+  <tr><td>Line ending</td><td>Added after each command: <code>\r</code>, <code>\n</code> or <code>\r\n</code>.</td></tr>
+  <tr><td>Poll every (seconds)</td><td>How often the poll command is sent.</td></tr>
+  <tr><td>Latitude / Longitude field</td><td>For JSON, a path such as <code>gps.lat</code>. For comma-separated, the column number (the first value after the prefix is 1).</td></tr>
+  <tr><td>Position scale</td><td><code>0.0000001</code> when the board sends degrees × 10⁷, <code>1</code> for plain degrees.</td></tr>
+  <tr><td>Altitude field / scale</td><td>Altitude above sea level. Use scale <code>0.001</code> for millimetres, <code>1</code> for metres.</td></tr>
+  <tr><td>Satellites, Fix, HDOP fields</td><td>Optional. <i>Fix</i> can be true/false, or a number where 0 means no fix.</td></tr>
+  <tr><td>Board name / Firmware field</td><td>Optional, shown on the Ground tab.</td></tr>
+  <tr><td>Only use replies that contain</td><td>Ignore replies without this field (e.g. answers to other commands).</td></tr>
+  <tr><td>Follow commands</td><td>Optional commands that make the board broadcast its position to the aircraft. They switch on the <i>Ground station sends its position to the aircraft</i> switch.</td></tr>
+  <tr><td>System ID (MAVLink types)</td><td>Only use GPS messages from this MAVLink system. 0 = any system that isn't the aircraft.</td></tr>
+  <tr><td>Release DTR and RTS</td><td>Turn the serial control lines off when connecting. ESP32 boards need this or they may reset.</td></tr>
+</table>
+<nav class="pager"><a class="prev" href="ground-position.html"><small>← Previous</small>Ground position</a><a class="next" href="follow-me.html"><small>Next →</small>Follow Me</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

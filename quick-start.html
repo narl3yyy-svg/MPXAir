@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick start tour · MPXAir documentation</title>
+<meta name="description" content="Try every screen in five minutes with the built-in demo drone. No hardware needed.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html" class="active">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Getting started</div><h1>Quick start tour</h1><p class="lead">Try every screen in five minutes with the built-in demo drone. No hardware needed.</p>
+<h2 id="connect-to-the-demo-drone">Connect to the demo drone</h2>
+<ol class="steps">
+  <li>Start MPXAir.</li>
+  <li>At the top right, open the connection list and pick <b>Demo drone</b>.</li>
+  <li>Press <b>Connect</b>. A progress window shows the link opening, the heartbeat and the parameters loading, just like Mission Planner's connection window.</li>
+</ol>
+<figure><img src="assets/img/connect-progress.jpg" alt="Connection progress window"><figcaption>The connection window counts the parameters as they arrive.</figcaption></figure>
+
+<h2 id="fly-it">Fly it</h2>
+<ol class="steps">
+  <li>Open <b>Fly</b>. On the <b>Actions</b> tab, press <b>Takeoff</b>, enter 20 m and confirm. The demo drone switches to GUIDED, arms and climbs.</li>
+  <li>Right-click the map and choose <b>Fly to here</b>.</li>
+  <li>Watch the HUD, the quick-view tiles and the trail. Press <b>RTL</b> to bring it home.</li>
+</ol>
+
+<h2 id="plan-a-mission">Plan a mission</h2>
+<ol class="steps">
+  <li>Open <b>Plan</b> and press <b>Takeoff</b> in the side panel.</li>
+  <li>Click the map three or four times to add waypoints, then press <b>RTL</b>.</li>
+  <li>Press <b>Write</b>. A window shows each item being sent and confirmed.</li>
+  <li>Back on <b>Fly</b> → <b>Actions</b>, press <b>Start Mission</b>.</li>
+</ol>
+
+<h2 id="look-around">Look around</h2>
+<ul>
+  <li><b>Setup → Motor test</b> shows the motor layout of the demo's quad.</li>
+  <li><b>Parameters</b>: pick a group on the left, for example <i>Battery (BATT)</i>, and hover over a row to see what it does.</li>
+  <li><b>Logs → Download from vehicle</b> lists the demo's logs.</li>
+  <li><b>Ground</b>: the demo also pretends to be a ground station with its own GPS. Choose <i>A ground station on the telemetry link</i> to see it on the map.</li>
+</ul>
+<div class="callout"><b>Note</b><p>The demo drone is a simple pretend aircraft for learning the screens. For realistic testing, use the <a href="simulator.html">ArduPilot simulator</a>.</p></div>
+<nav class="pager"><a class="prev" href="install.html"><small>← Previous</small>Installing and running</a><a class="next" href="connecting.html"><small>Next →</small>Connecting to your aircraft</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

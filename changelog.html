@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What&#x27;s new · MPXAir documentation</title>
+<meta name="description" content="Changes in each version of MPXAir.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html" class="active">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Help</div><h1>What&#x27;s new</h1><p class="lead">Changes in each version of MPXAir.</p>
+<h2 id="1-2-3">1.2.3</h2>
+<ul>
+  <li><b>Disconnect</b> asks for confirmation (with a stronger warning if the aircraft is armed), then closes the serial port completely and confirms it is free for other programs.</li>
+  <li>While connected, MPXAir has the port to itself, so other programs get a clear "busy" error. If another program already has the port open, MPXAir names it.</li>
+  <li><b>Fixed:</b> the heartbeat could be written while the port was closing.</li>
+</ul>
+<h2 id="1-2-2">1.2.2</h2>
+<ul>
+  <li><b>Fixed:</b> the firmware version was sometimes never learned on a busy radio link, so matching parameter descriptions weren't used. It's now requested until it arrives, and read from the startup banner as a fallback.</li>
+  <li><b>Fixed:</b> a step in the connection and Plan progress windows could stay on "reading…".</li>
+  <li>The GROUND label moves above its badge when the aircraft is right next to the ground station.</li>
+  <li><code>mpxair --connect</code> starts and connects to the last-used device.</li>
+</ul>
+<h2 id="1-2-1">1.2.1</h2>
+<ul>
+  <li><b>Fixed:</b> a stray diagonal line on the HUD next to the pitch ladder; the ladder now covers ±90° with dashed rungs below the horizon.</li>
+  <li><b>Fixed:</b> dropdowns showing no value when their first option was selected (e.g. Ground station type, parameter values).</li>
+  <li><b>Fixed:</b> the window opening wider than the screen, which hid the right-hand panels.</li>
+  <li>Parameter descriptions matched to the aircraft's exact firmware version, a clearer description panel (<i>What it does</i>, options), and descriptions in the list.</li>
+  <li>Ground GPS card at the bottom-right of the Fly map. The GROUND marker stays at its last known position when the fix is lost.</li>
+  <li>Clearer ground station panel (board, GPS, radio links, health), more robust reading of board replies.</li>
+  <li>Automatic reconnect when a USB device drops off and comes back.</li>
+  <li>"3D Fix + DGPS" instead of "DGPS", and a smaller map credit.</li>
+</ul>
+<h2 id="1-2-0">1.2.0</h2>
+<ul>
+  <li><b>Ground station types</b>: RFD900 + ESP32, GPS in the telemetry (NMEA/MAVLink), MAVLink GPS from the ground station, and custom boards with JSON or comma-separated replies. Each type has its own editable settings, with <i>Test now</i> and the last message received.</li>
+  <li>This documentation website.</li>
+</ul>
+<h2 id="1-1-0">1.1.0</h2>
+<ul>
+  <li>Connection and Plan read/write progress windows.</li>
+  <li>Quick view with 2–16 tiles and 45 values.</li>
+  <li>Parameter groups sidebar, and hover descriptions everywhere.</li>
+  <li>Adjustable, auto-clearing flight trail, and the GPS card at the bottom-left of the map.</li>
+  <li>Readable dropdowns and the Internet use choices.</li>
+</ul>
+<h2 id="1-0-0">1.0.0</h2>
+<p>First public release: Fly, Plan, Setup, Parameters, Logs and Ground, the RFD900 + ESP32 board, offline maps, and the installer.</p>
+<p>Full details are in <a href="https://github.com/narl3yyy-svg/MPXAir/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<nav class="pager"><a class="prev" href="faq.html"><small>← Previous</small>Questions and answers</a><span></span></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

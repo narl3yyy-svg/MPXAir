@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installing and running · MPXAir documentation</title>
+<meta name="description" content="Run MPXAir straight from its folder, or install it so it appears in Ubuntu&#x27;s app grid.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html">Introduction</a>
+<a href="install.html" class="active">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+<div class="crumbs">Getting started</div><h1>Installing and running</h1><p class="lead">Run MPXAir straight from its folder, or install it so it appears in Ubuntu's app grid.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+  <li>Ubuntu 24.04 or newer. It is developed and tested on Ubuntu 25.10. Other Linux desktops with GTK 4.12+ and libadwaita 1.4+ also work.</li>
+  <li>Python 3.10 or newer and these Ubuntu packages, which a standard Ubuntu desktop normally already has:
+    <code>python3-gi</code>, <code>python3-cairo</code>, <code>gir1.2-gtk-4.0</code>, <code>gir1.2-adw-1</code>.</li>
+  <li>Optional: <code>gir1.2-geoclue-2.0</code>, to use the computer's location service as the ground position.</li>
+</ul>
+
+<h2 id="get-mpxair">Get MPXAir</h2>
+<pre><code>git clone https://github.com/narl3yyy-svg/MPXAir.git
+cd MPXAir</code></pre>
+<p>Or download the ZIP from the GitHub page (<b>Code → Download ZIP</b>) and unpack it.</p>
+
+<h2 id="run-it-without-installing">Run it without installing</h2>
+<pre><code>./run.sh</code></pre>
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td><code>./run.sh</code></td><td>Start MPXAir. Settings go in <code>~/.config/mpxair</code>, missions and logs in <code>~/Documents/MPXAir</code>.</td></tr>
+  <tr><td><code>./run.sh --portable</code></td><td>Keep settings, map cache and logs inside the folder (<code>userdata/</code>). Good for a USB stick you carry between computers.</td></tr>
+  <tr><td><code>./run.sh --connect</code> or <code>mpxair --connect</code></td><td>Start and connect straight away to the last-used device.</td></tr>
+  <tr><td><code>./run.sh --demo</code></td><td>Run only the demo drone in the terminal (<code>tcp:127.0.0.1:5790</code>). Useful for testing other ground stations.</td></tr>
+</table>
+<p>If something is missing, <code>run.sh</code> says exactly which packages to install.</p>
+
+<h2 id="install-it">Install it</h2>
+<pre><code>./install.sh</code></pre>
+<ol class="steps">
+  <li>It checks the Ubuntu packages and offers to install any that are missing with <code>apt</code>. Only then does it ask for your password.</li>
+  <li>It copies MPXAir to <code>~/.local/share/mpxair</code>.</li>
+  <li>It adds an <b>MPXAir</b> launcher to the app grid and an <code>mpxair</code> terminal command.</li>
+  <li>It offers to add you to the <code>dialout</code> group, which is needed for USB flight controllers and radios. Log out and back in afterwards.</li>
+</ol>
+<p>To install for every user on the computer, use <code>./install.sh --system</code>, which installs to <code>/opt/mpxair</code>.</p>
+
+<h2 id="update">Update</h2>
+<pre><code>cd MPXAir
+git pull
+./install.sh</code></pre>
+<p>Your settings, maps and logs are kept.</p>
+
+<h2 id="uninstall">Uninstall</h2>
+<pre><code>./uninstall.sh</code></pre>
+<p>Use <code>./uninstall.sh --system</code> for a system-wide install. Your settings (<code>~/.config/mpxair</code>), map cache (<code>~/.cache/mpxair</code>) and logs (<code>~/Documents/MPXAir</code>) are left in place.</p>
+
+<div class="callout warn"><b>USB access</b><p>If MPXAir says <i>Permission denied</i> when opening a USB port, run <code>sudo usermod -aG dialout $USER</code>, then log out and back in.</p></div>
+<nav class="pager"><a class="prev" href="index.html"><small>← Previous</small>Introduction</a><a class="next" href="quick-start.html"><small>Next →</small>Quick start tour</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MPXAir documentation</title>
+<meta name="description" content="A modern ArduPilot ground control station for Linux, in the spirit of Mission Planner.">
+<link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script>try{var t=localStorage.getItem("mpxair-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn menubtn" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="assets/img/icon.svg" alt=""> MPXAir <small>docs</small></a>
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search the docs" autocomplete="off"
+    aria-label="Search the documentation"><kbd>/</kbd><div class="results" id="results"></div></div>
+  <button class="iconbtn" id="theme" aria-label="Light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+  <a class="gh" href="https://github.com/narl3yyy-svg/MPXAir"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<div class="layout">
+  <aside class="sidebar"><h4>Getting started</h4>
+<a href="index.html" class="active">Introduction</a>
+<a href="install.html">Install</a>
+<a href="quick-start.html">Quick start</a>
+<h4>Connecting</h4>
+<a href="connecting.html">Connecting</a>
+<h4>Using MPXAir</h4>
+<a href="fly.html">Fly</a>
+<a href="plan.html">Plan</a>
+<a href="firmware.html">Setup · Firmware</a>
+<a href="calibration.html">Setup · Calibration</a>
+<a href="modes-failsafes.html">Setup · Modes and failsafes</a>
+<a href="motor-test.html">Setup · Motor test</a>
+<a href="parameters.html">Parameters</a>
+<a href="logs.html">Logs</a>
+<a href="maps.html">Maps</a>
+<a href="preferences.html">Preferences</a>
+<h4>Ground station</h4>
+<a href="ground-position.html">Ground position</a>
+<a href="ground-station-types.html">Ground station types</a>
+<a href="follow-me.html">Follow Me</a>
+<a href="antenna-tracker.html">Antenna tracker</a>
+<h4>Hardware and integration</h4>
+<a href="rfd900-esp32.html">RFD900 + ESP32 board</a>
+<a href="custom-ground-station.html">Build your own</a>
+<a href="simulator.html">ArduPilot simulator</a>
+<h4>Help</h4>
+<a href="troubleshooting.html">Troubleshooting</a>
+<a href="faq.html">FAQ</a>
+<a href="changelog.html">What&#x27;s new</a></aside>
+  <main><article>
+
+<div class="hero">
+  <div>
+    <span class="badge">Version 1.2.3</span>
+    <h1>MPXAir documentation</h1>
+    <p class="lead">Plan, fly, set up and review ArduPilot drones, planes, rovers and boats from Ubuntu.
+    It uses the same screens and files as Mission Planner, rebuilt as a fast, native Linux app.</p>
+    <div class="btns">
+      <a class="btn primary" href="install.html">Install MPXAir</a>
+      <a class="btn" href="quick-start.html">Take the tour</a>
+      <a class="btn" href="https://github.com/narl3yyy-svg/MPXAir">GitHub</a>
+    </div>
+  </div>
+  <figure style="margin:0"><img src="assets/img/fly.jpg" alt="The MPXAir Fly screen"></figure>
+</div>
+
+<h2 id="what-mpxair-does">What MPXAir does</h2>
+<div class="cards">
+  <a class="card" href="fly.html"><div class="ic">✈️</div><b>Fly</b><span>HUD, live map, quick view, actions, and Air and Ground status.</span></a>
+  <a class="card" href="plan.html"><div class="ic">🗺️</div><b>Plan</b><span>Missions, geofence, rally points, survey grids, read and write.</span></a>
+  <a class="card" href="calibration.html"><div class="ic">🛠️</div><b>Setup</b><span>Firmware, calibrations, flight modes, failsafes, motor test.</span></a>
+  <a class="card" href="parameters.html"><div class="ic">🎛️</div><b>Parameters</b><span>Every setting, grouped, searchable and explained.</span></a>
+  <a class="card" href="logs.html"><div class="ic">📈</div><b>Logs</b><span>Download, graph and replay flights.</span></a>
+  <a class="card" href="ground-position.html"><div class="ic">📡</div><b>Ground station</b><span>Your own GPS position, Follow Me and antenna tracking.</span></a>
+</div>
+
+<h2 id="why-mpxair">Why MPXAir</h2>
+<ul>
+  <li><b>Familiar.</b> The same workflow as Mission Planner, with the same <code>.waypoints</code> and <code>.param</code> files, parameter descriptions and mission commands.</li>
+  <li><b>Native and modern.</b> GTK 4 and libadwaita, light and dark styles, small-screen and touch friendly.</li>
+  <li><b>Self-contained.</b> No downloads from outside sources. Everything it needs ships with Ubuntu. The MAVLink protocol, map engine, log reader and firmware uploader are all part of MPXAir.</li>
+  <li><b>Ground station aware.</b> It reads the GPS of your ground station (for example an RFD900 + ESP32 board) and shows the aircraft and the ground station side by side.</li>
+</ul>
+
+<h2 id="where-to-start">Where to start</h2>
+<ol class="steps">
+  <li><a href="install.html">Install MPXAir</a>, or just run it from its folder.</li>
+  <li><a href="quick-start.html">Take the quick tour</a> with the built-in demo drone. You don't need any hardware.</li>
+  <li><a href="connecting.html">Connect your aircraft</a> over USB, a telemetry radio, UDP or TCP.</li>
+  <li>Check the <a href="calibration.html">setup and calibration</a> pages before the first flight.</li>
+</ol>
+
+<div class="callout tip"><b>Tip</b><p>Press <kbd>/</kbd> anywhere on this site to search.</p></div>
+<nav class="pager"><span></span><a class="next" href="install.html"><small>Next →</small>Installing and running</a></nav>
+<footer class="site">MPXAir is developed by <a href="https://github.com/narl3yyy-svg">narl3yyy-svg</a> ·
+GPL-3.0 · <a href="https://github.com/narl3yyy-svg/MPXAir">Source on GitHub</a> · <a href="https://github.com/narl3yyy-svg/MPXAir/issues">Report a problem</a></footer>
+  </article></main>
+  <aside class="toc"><h5>On this page</h5><nav></nav></aside>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
