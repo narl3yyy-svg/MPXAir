@@ -142,10 +142,13 @@ class Hud(CairoWidget):
         # --- heading tape (top)
         self._heading_tape(cr, w, st)
         # --- speed (left) and altitude (right) tapes
+        # not connected: the state still holds the last values; don't show them as live
+        live = st.connected
         spd = st.airspeed if st.vclass == "plane" and st.airspeed > 0 else st.groundspeed
-        self._tape(cr, 8, h * 0.2, 58, h * 0.6, spd, 2, 10, "left", "GS" if spd == st.groundspeed else "AS")
-        self._tape(cr, w - 66, h * 0.2, 58, h * 0.6, st.alt, 5, 20, "right", "ALT")
-        self._vsi(cr, w - 6, h * 0.2, h * 0.6, st.climb)
+        label = "GS" if spd == st.groundspeed else "AS"
+        self._tape(cr, 8, h * 0.2, 58, h * 0.6, spd if live else 0.0, 2, 10, "left", label)
+        self._tape(cr, w - 66, h * 0.2, 58, h * 0.6, st.alt if live else 0.0, 5, 20, "right", "ALT")
+        self._vsi(cr, w - 6, h * 0.2, h * 0.6, st.climb if live else 0.0)
 
         # --- status texts
         armed = st.armed

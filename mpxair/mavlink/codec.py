@@ -99,10 +99,13 @@ def _unpack(mdef, payload):
         payload = payload[:mdef.size]
     raw = mdef.struct.unpack(payload)
     values = {}
+    chars = {}
     i = 0
     for fname, ftype, arr, _ext, _e, _u in mdef.fields:
         if ftype == "char":
-            values[fname] = raw[i].split(b"\0", 1)[0].decode("utf-8", "replace")
+            text = raw[i].split(b"\0", 1)[0]
+            chars[fname] = text         # undecoded; len == array size means no terminating NUL
+            values[fname] = text.decode("utf-8", "replace")
             i += 1
         elif arr:
             values[fname] = list(raw[i:i + arr])
@@ -110,6 +113,7 @@ def _unpack(mdef, payload):
         else:
             values[fname] = raw[i]
             i += 1
+    values["_chars_raw"] = chars
     return values
 
 
@@ -145,7 +149,8 @@ class Encoder:
         self.version = version
         self.seq = 0
 
-    def encode(self, name, **kwargs):
+    def encode(self, name, /, **kwargs):
+        # positional-only: several messages have a field called `name` (NAMED_VALUE_FLOAT, ...)
         mdef = MSG_BY_NAME[name]
         payload = _pack(mdef, kwargs)
         seq = self.seq

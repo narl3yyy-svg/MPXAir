@@ -277,6 +277,14 @@ def flash(fw, bl, progress=None, log=None):
     if fw.board_id != bl.board_id and not (bl.board_id == 33 and fw.board_id == 9):
         raise FirmwareError(f"This firmware is for board {fw.board_id}, but the connected board is "
                             f"{bl.board_id}. Choose the right firmware for your board.")
+    if fw.extf:
+        # The external-flash part needs the bootloader's EXTF_* commands, which MPXAir
+        # doesn't implement yet. Writing only the internal part would leave a board that
+        # reports success but runs with missing code, so refuse before erasing anything.
+        raise FirmwareError("This firmware also has a part for the board's external flash "
+                            f"({len(fw.extf) // 1024} kB), which MPXAir can't write yet. "
+                            "Nothing was changed on the board. Use Mission Planner, QGroundControl "
+                            "or ArduPilot's uploader.py for this board.")
     if bl.flash_size and len(fw.image) > bl.flash_size:
         raise FirmwareError(f"The firmware ({len(fw.image)} bytes) does not fit in this board's "
                             f"flash ({bl.flash_size} bytes).")

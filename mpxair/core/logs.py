@@ -249,10 +249,12 @@ class LogDownloader:
         h = v.on("LOG_DATA", on_data)
         try:
             v.send("LOG_REQUEST_DATA", **v.target, id=log_id, ofs=0, count=0xFFFFFFFF)
-            started = time.monotonic()
+            started = last_req = time.monotonic()
             while True:
                 if cancel is not None and cancel.is_set():
                     raise RuntimeError("Cancelled")
+                if not v.is_open:
+                    raise RuntimeError("The link was lost during the download.")
                 time.sleep(0.1)
                 with lock:
                     end = state["end"] if state["end"] is not None else size
@@ -264,7 +266,10 @@ class LogDownloader:
                     progress(min(got, end or got), end or size)
                 if end and not missing:
                     break
-                if idle > 0.5:
+                # `idle` is time since the last LOG_DATA arrived; requests don't reset it
+                if idle > 15:
+                    raise RuntimeError("The download stalled: the vehicle stopped sending log data.")
+                if idle > 0.5 and time.monotonic() - last_req > 0.5:
                     if not missing:
                         if time.monotonic() - started > 10 and not got:
                             raise RuntimeError("The vehicle sent no log data.")
@@ -276,10 +281,7 @@ class LogDownloader:
                         b += 1
                     v.send("LOG_REQUEST_DATA", **v.target, id=log_id, ofs=a * block,
                            count=(b - a + 1) * block)
-                    with lock:
-                        state["last"] = time.monotonic()
-                    if idle > 15:
-                        raise RuntimeError("The download stalled.")
+                    last_req = time.monotonic()
         finally:
             v.off(h)
             v.send("LOG_REQUEST_END", **v.target)

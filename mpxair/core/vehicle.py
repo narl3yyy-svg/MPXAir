@@ -25,6 +25,14 @@ MAV_RESULT = {v: n[0].replace("MAV_RESULT_", "") for v, n in defs.ENUMS["MAV_RES
 SEVERITY = ["EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"]
 
 FOREIGN_POSITION = {"GPS_RAW_INT", "GLOBAL_POSITION_INT", "GPS_INPUT", "HIL_GPS", "GPS2_RAW"}
+# MAV_AUTOPILOT values that never mean a flight controller: GENERIC is what many
+# peripherals send, INVALID is the spec's "not an autopilot" (GCS, Remote ID, gimbal...)
+NOT_AUTOPILOT = {0, 8}
+# MAV_TYPEs of components that share a vehicle's system id but are not the vehicle:
+# GCS, companion, gimbal, ADSB, camera, charging station, FLARM, servo, Remote ID (ODID),
+# battery, parachute, log, OSD, IMU, GPS, winch, illuminator, gripper
+NOT_VEHICLE_TYPES = {6, 18, 26, 27, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 44, 48}
+CHUNK_TIMEOUT = 2.0      # seconds to wait for the rest of a chunked STATUSTEXT
 FORCE_ARM_MAGIC = 2989
 FORCE_DISARM_MAGIC = 21196
 GCS_SYSID = 255
@@ -222,6 +230,7 @@ class Vehicle:
         self.params.reset()
         self._streams_requested = False
         self._text_buf = b""
+        self._chunked_statustext = {}
         self.gcs_board_seen = 0.0
         self._last_ver_req = time.monotonic()
         self._ver_tries = 0
@@ -414,6 +423,8 @@ class Vehicle:
             self._last_ver_req = now
             self._ver_tries += 1
             self.request_message(148)
+        if self._chunked_statustext:
+            _flush_statustext_chunks(self, now)
         if now - self._last_rate_calc >= 1.0:
             dt = now - self._last_rate_calc
             self.rates = {k: v / dt for k, v in self._rate_counts.items()}
@@ -431,7 +442,7 @@ class Vehicle:
                 st.flight_time = time.monotonic() - st.armed_since
 
     # ------------------------------------------------------------------- send
-    def send(self, name, **kw):
+    def send(self, name, /, **kw):
         t = self.transport
         if t is None:
             return False
@@ -512,7 +523,7 @@ class Vehicle:
         if name == "HEARTBEAT":
             self.seen_systems[(msg._sysid, msg._compid)] = (msg.type, msg.autopilot, now)
             # only lock on to autopilots (not GCSs, gimbals, radios)
-            if msg.autopilot == 0 or msg.type in (6, 18, 26, 27, 30, 31, 32, 33):
+            if msg.autopilot in NOT_AUTOPILOT or msg.type in NOT_VEHICLE_TYPES:
                 if name in self._listeners:
                     self.emit(name, msg)
                 return
@@ -560,6 +571,11 @@ class Vehicle:
         st = self.state
         first = not st.connected
         st.last_heartbeat = now
+        # UDP listener: only talk to the address this autopilot sends from. Its heartbeat
+        # came in the datagram just read, so the transport's current peer is the vehicle.
+        t = self.transport
+        if getattr(t, "locked", 1) is None:
+            t.lock_peer()
         st.mav_type = msg.type
         st.autopilot = msg.autopilot
         st.vclass = modes.vehicle_class(msg.type)
@@ -703,10 +719,13 @@ class Vehicle:
             ok, res = self.set_mode("GUIDED")
             if not ok:
                 return ok, f"Could not switch to GUIDED: {res}"
-        self.send("MISSION_ITEM_INT", **self.target, seq=0, frame=3, command=16, current=2,
-                  autocontinue=0, param1=0, param2=0, param3=0, param4=0,
-                  x=int(lat * 1e7), y=int(lon * 1e7), z=float(alt), mission_type=0)
-        ack = self.wait_for("MISSION_ACK", timeout=2.0)
+        tgt = self.target
+        # listen before sending: on a fast link the ACK can arrive before a late waiter
+        ack = self.request_and_wait(
+            lambda: self.send("MISSION_ITEM_INT", **tgt, seq=0, frame=3, command=16, current=2,
+                              autocontinue=0, param1=0, param2=0, param3=0, param4=0,
+                              x=int(lat * 1e7), y=int(lon * 1e7), z=float(alt), mission_type=0),
+            "MISSION_ACK", lambda m: getattr(m, "mission_type", 0) == 0, timeout=1.5, retries=3)
         if ack is None:
             return False, "NO RESPONSE"
         return ack.type == 0, "ACCEPTED" if ack.type == 0 else f"REJECTED ({ack.type})"
@@ -886,14 +905,33 @@ def _h_statustext(v, m):
     text = m.text
     sid = getattr(m, "id", 0)
     if sid:
-        # chunked statustext: join chunks with the same id
-        parts = v._chunked_statustext.setdefault(sid, [])
-        parts.append(text)
-        if len(text) == 50:
+        # chunked statustext: join the raw bytes of chunks with the same id, then decode
+        # (a multi-byte character can be split between chunks). A chunk that fills all
+        # 50 bytes (no NUL) means more follow: the byte count matters, not the text length.
+        raw = getattr(m, "_chars_raw", {}).get("text", text.encode())
+        pending = v._chunked_statustext.get(sid)
+        if pending is None:
+            pending = v._chunked_statustext[sid] = [0.0, m.severity, b""]
+        pending[0] = time.monotonic()
+        pending[2] += raw
+        if len(raw) >= 50:
             return
-        text = "".join(parts)
         del v._chunked_statustext[sid]
-    entry = (time.time(), m.severity, text)
+        text = pending[2].decode("utf-8", "replace")
+    _add_statustext(v, m.severity, text)
+
+
+def _flush_statustext_chunks(v, now):
+    """Show chunked texts whose closing chunk never came (lost, or the text was an
+    exact multiple of 50 bytes so no shorter chunk was needed)."""
+    for sid, (t, severity, data) in list(v._chunked_statustext.items()):
+        if now - t > CHUNK_TIMEOUT:
+            del v._chunked_statustext[sid]
+            _add_statustext(v, severity, data.decode("utf-8", "replace"))
+
+
+def _add_statustext(v, severity, text):
+    entry = (time.time(), severity, text)
     v.statustext.append(entry)
     if not v.state.flight_sw_version:
         _version_from_banner(v, text)

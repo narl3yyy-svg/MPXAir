@@ -1,4 +1,5 @@
 """Header-bar connection controls (port, baud, connect/disconnect)."""
+import socket
 import threading
 import time
 
@@ -495,9 +496,11 @@ class ConnectBar(Gtk.Box):
         self.btn.set_tooltip_text(None)
         self.refresh_ports()
         spec = getattr(self, "last_spec", None)
-        if err and spec and spec.get("type") == "serial" and spec.get("usb_id"):
-            # the USB device dropped off (unplugged, or a power dip on the board):
-            # wait for the same device to come back, under whatever name it gets
+        if err and spec and ((spec.get("type") == "serial" and spec.get("usb_id"))
+                             or spec.get("type") == "tcp"):
+            # the USB device dropped off (unplugged, or a power dip on the board): wait for
+            # the same device to come back, under whatever name it gets. A TCP link that
+            # dropped: wait for the other side to accept connections again.
             self._start_reconnect(spec, err)
             return
         if err:
@@ -511,14 +514,37 @@ class ConnectBar(Gtk.Box):
         self.btn.set_label("Stop")
         self.btn.set_css_classes([])
         self.reconnecting = True
-        toast(f"Connection lost ({err}). Reconnecting automatically when the device is back…", 6)
+        what = "the link" if spec.get("type") == "tcp" else "the device"
+        toast(f"Connection lost ({err}). Reconnecting automatically when {what} is back…", 6)
         GLib.timeout_add(1500, self._reconnect_tick)
 
     def _reconnect_tick(self):
         if not getattr(self, "reconnecting", False):
             return False
         spec = self._reconnect_spec
-        dev = find_usb_device(spec["usb_id"])
+        if spec.get("type") == "tcp":
+            # network link (SITL, MAVProxy, a Wi-Fi telemetry bridge): reconnect once the
+            # other side accepts connections again. Probe off the main loop.
+            if not getattr(self, "_probing", False):
+                self._probing = True
+
+                def probe():
+                    try:
+                        socket.create_connection((spec.get("host", "127.0.0.1"),
+                                                  int(spec.get("port", 5760))), timeout=1.0).close()
+                        return True
+                    except OSError:
+                        return False
+
+                def probed(ok):
+                    self._probing = False
+                    if ok and self.reconnecting and not self.v.is_open:
+                        self.reconnecting = False
+                        self._connect(spec)
+                background(probe, probed)
+            dev = None
+        else:
+            dev = find_usb_device(spec["usb_id"])
         if dev:
             self.reconnecting = False
             new = dict(spec, device=dev)
@@ -531,8 +557,10 @@ class ConnectBar(Gtk.Box):
         if time.monotonic() > self._reconnect_until:
             self.reconnecting = False
             self._set_busy(False)
-            alert(self.get_root(), "Connection lost",
-                  "The device didn't come back within two minutes. Check the cable and the board's power, "
-                  "then press Connect.")
+            what = ("The connection didn't come back within two minutes. Check that the other side "
+                    "(simulator, MAVProxy or telemetry bridge) is running and reachable"
+                    if spec.get("type") == "tcp" else
+                    "The device didn't come back within two minutes. Check the cable and the board's power")
+            alert(self.get_root(), "Connection lost", what + ", then press Connect.")
             return False
         return True

@@ -97,7 +97,12 @@ class SerialTransport:
                 "'dialout' group (the installer can set this up), then log out and back in.")
         except OSError as e:
             if e.errno == 16:      # EBUSY: another program has it open exclusively
+                me = f"[{os.getpid()}]"
                 users = port_users(device)
+                if users and all(u.endswith(me) for u in users):
+                    raise TransportError(f"{device} is already open in MPXAir (for example by the "
+                                         "connection or the ground-station page). Disconnect it there first.")
+                users = [u for u in users if not u.endswith(me)]
                 who = f" ({', '.join(users)})" if users else ""
                 raise TransportError(
                     f"{device} is in use by another program{who}. Close or disconnect it there first "
@@ -221,6 +226,18 @@ class UdpServerTransport:
             raise TransportError(f"Could not listen on UDP port {port}: {e.strerror}")
         self.sock.setblocking(False)
         self.peer = None
+        self.locked = None          # the vehicle's address, once its heartbeat was seen
+        self._locked_seen = 0.0
+        self.ignored = 0            # datagrams dropped from other senders
+
+    LOCK_TIMEOUT = 5.0              # vehicle silent this long: accept a new address again
+
+    def lock_peer(self):
+        """Called once the autopilot's heartbeat arrived: reply only to it from now on,
+        so another host on the network can't take over the link or inject data."""
+        if self.peer:
+            self.locked = self.peer
+            self._locked_seen = time.monotonic()
 
     def read(self, timeout=0.1):
         r, _, _ = select.select([self.sock], [], [], timeout)
@@ -230,6 +247,15 @@ class UdpServerTransport:
             data, addr = self.sock.recvfrom(65535)
         except (BlockingIOError, ConnectionRefusedError):
             return b""
+        now = time.monotonic()
+        if self.locked:
+            if addr == self.locked:
+                self._locked_seen = now
+            elif now - self._locked_seen < self.LOCK_TIMEOUT:
+                self.ignored += 1
+                return b""
+            else:
+                self.locked = None  # the vehicle went quiet (new IP or port): follow the new sender
         self.peer = addr
         return data
 

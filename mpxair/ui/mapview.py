@@ -333,7 +333,10 @@ class MapView(Gtk.Widget):
                 for ty in range(ty0, ty1 + 1):
                     sx = (tx * TILE - left) * s
                     sy = (ty * TILE - top) * s
-                    rect = Graphene.Rect().init(sx, sy, ts + 0.5, ts + 0.5)
+                    # whole-pixel edges: fractional ones get blended with the background,
+                    # which shows as thin lines along every tile seam
+                    x0, y0 = math.floor(sx), math.floor(sy)
+                    rect = Graphene.Rect().init(x0, y0, math.ceil(sx + ts) - x0, math.ceil(sy + ts) - y0)
                     if zt < z:
                         # beyond the provider's max zoom: magnify the deepest tile
                         self._draw_parent(snap, prov, z, tx, ty, z - zt, rect, sx, sy, ts)

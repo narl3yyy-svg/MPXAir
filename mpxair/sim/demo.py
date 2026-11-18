@@ -269,7 +269,7 @@ class DemoServer:
             except OSError:
                 pass
 
-    def send(self, name, **kw):
+    def send(self, name, /, **kw):
         c = self.client
         if not c:
             return
